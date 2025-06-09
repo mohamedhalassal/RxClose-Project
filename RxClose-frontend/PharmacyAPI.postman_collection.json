@@ -1,0 +1,467 @@
+{
+  "info": {
+    "name": "Pharmacy API",
+    "_postman_id": "12345678-abcd-efgh-ijkl-1234567890ab",
+    "description": "Collection for testing Pharmacy API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Register",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "https://pharmacybackend-f0ake9fcbcc4bfga.eastasia-01.azurewebsites.net/api/register",
+              "host": [
+                "https://pharmacybackend-f0ake9fcbcc4bfga.eastasia-01.azurewebsites.net"
+              ],
+              "path": [
+                "api",
+                "register"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fullName\": \"John Doe\",\n  \"email\": \"john@example.com\",\n  \"phoneNumber\": \"1234567890\",\n  \"password\": \"Password123!\",\n  \"dateOfBirth\": \"1990-01-01T00:00:00Z\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Login",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "https://pharmacybackend-f0ake9fcbcc4bfga.eastasia-01.azurewebsites.net/api/login",
+              "host": [
+                "https://pharmacybackend-f0ake9fcbcc4bfga.eastasia-01.azurewebsites.net"
+              ],
+              "path": [
+                "api",
+                "login"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"john@example.com\",\n  \"password\": \"Password123!\"\n}"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Users",
+      "item": [
+        {
+          "name": "Get User By ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "https://pharmacybackend-f0ake9fcbcc4bfga.eastasia-01.azurewebsites.net/api/users/{{userId}}",
+              "host": [
+                "https://pharmacybackend-f0ake9fcbcc4bfga.eastasia-01.azurewebsites.net"
+              ],
+              "path": [
+                "api",
+                "users",
+                "{{userId}}"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Pharmacies",
+      "item": [
+        {
+          "name": "Add Pharmacy",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "https://pharmacybackend-f0ake9fcbcc4bfga.eastasia-01.azurewebsites.net/api/pharmacies",
+              "host": [
+                "https://pharmacybackend-f0ake9fcbcc4bfga.eastasia-01.azurewebsites.net"
+              ],
+              "path": [
+                "api",
+                "pharmacies"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"My Pharmacy\",\n  \"address\": \"123 Street\",\n  \"phoneNumber\": \"1234567890\",\n  \"ownerId\": \"{{userId}}\",\n  \"longitude\": 35.0,\n  \"latitude\": 31.0\n}"
+            }
+          }
+        },
+        {
+          "name": "Update Pharmacy",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "https://pharmacybackend-f0ake9fcbcc4bfga.eastasia-01.azurewebsites.net/api/pharmacies/{{pharmacyId}}",
+              "host": [
+                "https://pharmacybackend-f0ake9fcbcc4bfga.eastasia-01.azurewebsites.net"
+              ],
+              "path": [
+                "api",
+                "pharmacies",
+                "{{pharmacyId}}"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id\": \"{{pharmacyId}}\",\n  \"name\": \"Updated Pharmacy\",\n  \"address\": \"456 New Street\",\n  \"phoneNumber\": \"9876543210\",\n  \"ownerId\": \"{{userId}}\",\n  \"longitude\": 36.0,\n  \"latitude\": 32.0\n}"
+            }
+          }
+        },
+        {
+          "name": "Get Pharmacy By ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "https://pharmacybackend-f0ake9fcbcc4bfga.eastasia-01.azurewebsites.net/api/pharmacies/{{pharmacyId}}",
+              "host": [
+                "https://pharmacybackend-f0ake9fcbcc4bfga.eastasia-01.azurewebsites.net"
+              ],
+              "path": [
+                "api",
+                "pharmacies",
+                "{{pharmacyId}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Pharmacies by User",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "https://pharmacybackend-f0ake9fcbcc4bfga.eastasia-01.azurewebsites.net/api/pharmacies/users/{{userId}}",
+              "host": [
+                "https://pharmacybackend-f0ake9fcbcc4bfga.eastasia-01.azurewebsites.net"
+              ],
+              "path": [
+                "api",
+                "pharmacies",
+                "users",
+                "{{userId}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Delete User from Pharmacy",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "https://pharmacybackend-f0ake9fcbcc4bfga.eastasia-01.azurewebsites.net/api/pharmacies/{{pharmacyId}}/users/{{userId}}",
+              "host": [
+                "https://pharmacybackend-f0ake9fcbcc4bfga.eastasia-01.azurewebsites.net"
+              ],
+              "path": [
+                "api",
+                "pharmacies",
+                "{{pharmacyId}}",
+                "users",
+                "{{userId}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Nearby Pharmacies",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "https://pharmacybackend-f0ake9fcbcc4bfga.eastasia-01.azurewebsites.net/api/nearbypharmacies",
+              "host": [
+                "https://pharmacybackend-f0ake9fcbcc4bfga.eastasia-01.azurewebsites.net"
+              ],
+              "path": [
+                "api",
+                "nearbypharmacies"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"longitude\": 35.0,\n  \"latitude\": 31.0\n}"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Medicines",
+      "item": [
+        {
+          "name": "Add Medicine",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "https://pharmacybackend-f0ake9fcbcc4bfga.eastasia-01.azurewebsites.net/api/Medicines",
+              "host": [
+                "https://pharmacybackend-f0ake9fcbcc4bfga.eastasia-01.azurewebsites.net"
+              ],
+              "path": [
+                "api",
+                "Medicines"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Paracetamol\",\n  \"description\": \"Pain relief\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Update Medicine",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "https://pharmacybackend-f0ake9fcbcc4bfga.eastasia-01.azurewebsites.net/api/medicines/{{medicineId}}",
+              "host": [
+                "https://pharmacybackend-f0ake9fcbcc4bfga.eastasia-01.azurewebsites.net"
+              ],
+              "path": [
+                "api",
+                "medicines",
+                "{{medicineId}}"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id\": \"{{medicineId}}\",\n  \"name\": \"Paracetamol Updated\",\n  \"description\": \"Updated description\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Get Medicine",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "https://pharmacybackend-f0ake9fcbcc4bfga.eastasia-01.azurewebsites.net/api/medicines/{{medicineId}}",
+              "host": [
+                "https://pharmacybackend-f0ake9fcbcc4bfga.eastasia-01.azurewebsites.net"
+              ],
+              "path": [
+                "api",
+                "medicines",
+                "{{medicineId}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Delete Medicine",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "https://pharmacybackend-f0ake9fcbcc4bfga.eastasia-01.azurewebsites.net/api/medicines/{{medicineId}}",
+              "host": [
+                "https://pharmacybackend-f0ake9fcbcc4bfga.eastasia-01.azurewebsites.net"
+              ],
+              "path": [
+                "api",
+                "medicines",
+                "{{medicineId}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Search Medicine by Name",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "https://pharmacybackend-f0ake9fcbcc4bfga.eastasia-01.azurewebsites.net/api/medicines?Name=Paracetamol",
+              "host": [
+                "https://pharmacybackend-f0ake9fcbcc4bfga.eastasia-01.azurewebsites.net"
+              ],
+              "path": [
+                "api",
+                "medicines?Name=Paracetamol"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Pharmacy Medicines",
+      "item": [
+        {
+          "name": "Assign Medicine to Pharmacy",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "https://pharmacybackend-f0ake9fcbcc4bfga.eastasia-01.azurewebsites.net/api/pharmacies/{{pharmacyId}}/assign/Medicines/{{medicineId}}",
+              "host": [
+                "https://pharmacybackend-f0ake9fcbcc4bfga.eastasia-01.azurewebsites.net"
+              ],
+              "path": [
+                "api",
+                "pharmacies",
+                "{{pharmacyId}}",
+                "assign",
+                "Medicines",
+                "{{medicineId}}"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"medicineId\": \"{{medicineId}}\",\n  \"pharmacyId\": \"{{pharmacyId}}\",\n  \"price\": 5.0,\n  \"quantity\": 100\n}"
+            }
+          }
+        },
+        {
+          "name": "Update Medicine in Pharmacy",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "https://pharmacybackend-f0ake9fcbcc4bfga.eastasia-01.azurewebsites.net/api/pharmacies/{{pharmacyId}}/Medicines/{{medicineId}}",
+              "host": [
+                "https://pharmacybackend-f0ake9fcbcc4bfga.eastasia-01.azurewebsites.net"
+              ],
+              "path": [
+                "api",
+                "pharmacies",
+                "{{pharmacyId}}",
+                "Medicines",
+                "{{medicineId}}"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"medicineId\": \"{{medicineId}}\",\n  \"pharmacyId\": \"{{pharmacyId}}\",\n  \"price\": 6.0,\n  \"quantity\": 80\n}"
+            }
+          }
+        },
+        {
+          "name": "Get Pharmacy Medicines",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "https://pharmacybackend-f0ake9fcbcc4bfga.eastasia-01.azurewebsites.net/api/users/{{userId}}/pharmacies/{{pharmacyId}}/Medicines",
+              "host": [
+                "https://pharmacybackend-f0ake9fcbcc4bfga.eastasia-01.azurewebsites.net"
+              ],
+              "path": [
+                "api",
+                "users",
+                "{{userId}}",
+                "pharmacies",
+                "{{pharmacyId}}",
+                "Medicines"
+              ]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,131 @@
+.search-container {
+  position: relative;
+  min-height: 100vh;
+  background-color: white;
+  padding-top: 80px; // Space for fixed navbar
+}
+
+.container {
+  position: relative;
+  z-index: 1;
+}
+
+.search-section {
+  max-width: 800px;
+  margin: 0 auto 2rem;
+  position: relative;
+  z-index: 2;
+}
+
+.input-group {
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  border-radius: 0.5rem;
+  overflow: hidden;
+  position: relative;
+  z-index: 2;
+
+  .form-control {
+    border: none;
+    padding: 1rem;
+    font-size: 1.1rem;
+
+    &:focus {
+      box-shadow: none;
+    }
+  }
+
+  .btn {
+    padding: 0 1.5rem;
+    font-weight: 500;
+  }
+}
+
+.medicine-details {
+  position: relative;
+  z-index: 2;
+  
+  .card-body {
+    padding: 2rem;
+  }
+
+  img {
+    width: 100%;
+    height: auto;
+    border-radius: 0.5rem;
+  }
+}
+
+.pharmacy-card {
+  position: relative;
+  z-index: 2;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  border: none;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+
+  &:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+  }
+
+  .card-body {
+    padding: 1.5rem;
+  }
+
+  .card-title {
+    color: #333;
+    margin-bottom: 1rem;
+  }
+
+  .card-text {
+    color: #666;
+    margin-bottom: 0.5rem;
+  }
+}
+
+.spinner-border {
+  width: 3rem;
+  height: 3rem;
+  position: relative;
+  z-index: 2;
+}
+
+.alert {
+  padding: 1rem;
+  border-radius: 0.5rem;
+  position: relative;
+  z-index: 2;
+}
+
+.fa-search {
+  color: #ccc;
+}
+
+// Loading and error states
+.text-center {
+  margin-top: 2rem;
+  position: relative;
+  z-index: 2;
+}
+
+// Results section
+.mt-4 {
+  margin-top: 2rem !important;
+  position: relative;
+  z-index: 2;
+}
+
+// No results section
+.py-5 {
+  padding-top: 3rem !important;
+  padding-bottom: 3rem !important;
+  position: relative;
+  z-index: 2;
+}
+
+// Search results container
+.search-results {
+  position: relative;
+  z-index: 2;
+  margin-top: 2rem;
+  background-color: white;
+} 

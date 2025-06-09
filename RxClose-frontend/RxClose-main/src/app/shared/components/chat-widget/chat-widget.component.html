@@ -1,0 +1,49 @@
+<div class="chat-widget">
+  <!-- Chat Icon Button -->
+  <button class="chat-icon" (click)="toggleChat()">
+    <img src="assets/images/shap.png" alt="Chat Icon">
+  </button>
+
+  <!-- Chat Window -->
+  <div class="chat-window" [class.open]="isOpen">
+    <div class="chat-header">
+      <div class="chat-title">
+        <img src="assets/images/shap.png" alt="ChatBot" class="chat-avatar">
+        <div>
+          <h5 class="mb-0">مساعد الصيدلة</h5>
+          <small class="text-muted">دردشة آلية</small>
+        </div>
+      </div>
+      <button class="close-btn" (click)="toggleChat()">×</button>
+    </div>
+
+    <div class="chat-messages">
+      <div *ngFor="let message of messages" class="message" [class.user]="message.isUser" [class.bot]="!message.isUser">
+        <p>{{ message.text }}</p>
+        <small class="message-time">{{ message.timestamp | date:'shortTime' }}</small>
+      </div>
+      <!-- Loading Indicator -->
+      <div *ngIf="isLoading" class="message bot loading">
+        <div class="typing-indicator">
+          <span></span>
+          <span></span>
+          <span></span>
+        </div>
+      </div>
+    </div>
+
+    <div class="quick-actions">
+      <button class="action-btn" (click)="sendQuickMessage('أعاني من صداع شديد منذ يومين')">صداع</button>
+      <button class="action-btn" (click)="sendQuickMessage('عندي حمى وحرارة عالية')">حمى</button>
+      <button class="action-btn" (click)="sendQuickMessage('أعاني من سعال مستمر')">سعال</button>
+      <button class="action-btn" (click)="sendQuickMessage('ما هو أفضل دواء للحساسية؟')">حساسية</button>
+      <button class="action-btn" (click)="sendQuickMessage('أحتاج نصائح للنوم بشكل أفضل')">أرق</button>
+      <button class="action-btn" (click)="sendQuickMessage('معلومات عن فيتامين د')">فيتامينات</button>
+    </div>
+
+    <div class="chat-input">
+      <input type="text" [(ngModel)]="newMessage" placeholder="اكتب رسالتك هنا..." (keyup.enter)="sendMessage()" [disabled]="isLoading">
+      <button class="send-btn" (click)="sendMessage()" [disabled]="isLoading">➤</button>
+    </div>
+  </div>
+</div>

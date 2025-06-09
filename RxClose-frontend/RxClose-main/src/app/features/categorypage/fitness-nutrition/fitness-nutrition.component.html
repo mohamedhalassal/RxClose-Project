@@ -1,0 +1,104 @@
+<!-- Navigation Bar -->
+<nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm">
+  <div class="container">
+    <!-- Logo -->
+    <a class="navbar-brand" routerLink="/auth/home">
+      <img src="assets/images/RxClose-Logo.PNG" alt="RxClose Logo" height="50" class="d-inline-block align-text-top">
+    </a>
+
+    <!-- Mobile Toggle Button -->
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+
+    <!-- Navigation Items -->
+    <div class="collapse navbar-collapse" id="navbarNav">
+      <ul class="navbar-nav me-auto">
+        <li class="nav-item">
+          <a class="nav-link" routerLink="/auth/home" routerLinkActive="active">Home</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" routerLink="/auth/search" routerLinkActive="active">Search</a>
+        </li>
+        <li class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle" href="#" id="categoryDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+            Category
+          </a>
+          <ul class="dropdown-menu" aria-labelledby="categoryDropdown">
+            <li><a class="dropdown-item" routerLink="/auth/category/drugs">Drugs</a></li>
+            <li><a class="dropdown-item" routerLink="/auth/category/medical-supplies">Medical Supplies</a></li>
+            <li><a class="dropdown-item" routerLink="/auth/category/fitness-nutrition">Fitness & Nutrition</a></li>
+            <li><a class="dropdown-item" routerLink="/auth/category/organic-herbal">Organic & Herbal Product</a></li>
+            <li><a class="dropdown-item" routerLink="/auth/category/home-care">Home Care</a></li>
+          </ul>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" routerLink="/auth/contact" routerLinkActive="active">Contact Us</a>
+        </li>
+      </ul>
+
+      <!-- Right Side Items -->
+      <ul class="navbar-nav">
+        <li class="nav-item">
+          <a class="nav-link" routerLink="/auth/cart" routerLinkActive="active">
+            <i class="fas fa-shopping-cart"></i>
+            <span class="badge bg-danger rounded-pill ms-1">0</span>
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" routerLink="/auth/profile" routerLinkActive="active">
+            <i class="fas fa-user"></i>
+          </a>
+        </li>
+        <li class="nav-item">
+          <button class="btn btn-outline-danger" (click)="logout()">
+            <i class="fas fa-sign-out-alt me-2"></i>تسجيل الخروج
+          </button>
+        </li>
+      </ul>
+    </div>
+  </div>
+</nav>
+
+<!-- Original Content -->
+<div class="container text-center mb-5 py-5 background">
+    <h1 class="fw-bold mb-4 text-white">Fitness & Nutrition</h1>
+    <p class="text-white lead mx-auto mb-5 w-50">
+        Explore our selection of fitness supplements, vitamins, and nutritional products.
+        Support your health and wellness journey with our quality products.
+    </p>
+</div>
+
+<!-- Products Grid -->
+<div class="container py-5">
+  <div class="row">
+    <!-- Loading State -->
+    <div *ngIf="loading" class="col-12 text-center py-5">
+      <div class="spinner-border text-primary" role="status">
+        <span class="visually-hidden">Loading...</span>
+      </div>
+    </div>
+
+    <!-- Error State -->
+    <div *ngIf="error" class="col-12 text-center py-5">
+      <div class="alert alert-danger" role="alert">
+        {{ error }}
+      </div>
+    </div>
+
+    <!-- Products -->
+    <div *ngFor="let product of products" class="col-md-4 mb-4">
+      <div class="card h-100">
+        <img [src]="product.image || 'assets/images/placeholder.jpg'" class="card-img-top" alt="{{ product.name }}">
+        <div class="card-body">
+          <h5 class="card-title">{{ product.name }}</h5>
+          <p class="card-text">{{ product.description }}</p>
+          <p class="card-text"><strong>السعر: {{ product.price | currency:'EGP' }}</strong></p>
+          <button class="btn btn-primary w-100" (click)="addToCart(product)">
+            <i class="fas fa-cart-plus me-2"></i>أضف إلى السلة
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div> 

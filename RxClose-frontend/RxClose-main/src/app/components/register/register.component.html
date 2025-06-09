@@ -1,0 +1,275 @@
+<div class="register-container">
+  <div class="container-fluid min-vh-100 d-flex align-items-center justify-content-center py-3">
+    <div class="row w-100">
+      <div class="col-lg-9 col-md-11 mx-auto">
+        <div class="card shadow-lg border-0 rounded-4">
+          <div class="row g-0">
+            
+            <!-- Image Section -->
+            <div class="col-lg-4 d-none d-lg-block position-relative">
+              <div class="image-section h-100 d-flex align-items-center justify-content-center">
+                <div class="overlay"></div>
+                <div class="image-content text-center text-white position-relative z-index-2">
+                  <div class="mb-4">
+                    <i class="fas fa-user-plus display-1 mb-3"></i>
+                  </div>
+                  <h3 class="fw-bold mb-3">مرحباً بك!</h3>
+                  <p class="lead mb-4">
+                    يرجى تقديم المعلومات المطلوبة لتسجيل حسابك الجديد
+                  </p>
+                  <div class="features">
+                    <div class="feature-item mb-2">
+                      <i class="fas fa-shield-alt me-2"></i>
+                      حماية البيانات
+                    </div>
+                    <div class="feature-item mb-2">
+                      <i class="fas fa-clock me-2"></i>
+                      تسجيل سريع
+                    </div>
+                    <div class="feature-item">
+                      <i class="fas fa-gift me-2"></i>
+                      عروض حصرية
+                    </div>
+                  </div>
+                  <p class="mt-4">لديك حساب بالفعل؟</p>
+                  <button routerLink="/auth/login" class="btn btn-outline-light px-4 py-2 fw-bold">
+                    تسجيل الدخول
+                  </button>
+                </div>
+                <img src="assets/images/login.jpeg" alt="إنشاء حساب" class="position-absolute top-0 start-0 w-100 h-100 object-fit-cover">
+              </div>
+            </div>
+
+            <!-- Registration Form Section -->
+            <div class="col-lg-8 d-flex align-items-center">
+              <div class="card-body p-4 w-100">
+                
+                <!-- Logo Section -->
+                <div class="text-center mb-3">
+                  <div class="logo-icon mx-auto mb-2">
+                    <i class="fas fa-pills"></i>
+                  </div>
+                  <h2 class="fw-bold text-primary mb-1">إنشاء حساب جديد</h2>
+                  <p class="text-muted mb-2">انضم إلى عائلة RxClose</p>
+                </div>
+
+                <!-- Alert Messages -->
+                @if (showSuccessMessage) {
+                  <div class="alert alert-success alert-dismissible fade show mb-3">
+                    <i class="fas fa-check-circle me-2"></i>
+                    {{ successMessage }}
+                    <button type="button" class="btn-close" (click)="showSuccessMessage = false"></button>
+                  </div>
+                }
+
+                @if (errorMessage) {
+                  <div class="alert alert-danger alert-dismissible fade show mb-3">
+                    <i class="fas fa-exclamation-circle me-2"></i>
+                    {{ errorMessage }}
+                    <button type="button" class="btn-close" (click)="errorMessage = ''"></button>
+                  </div>
+                }
+
+                <!-- Social Registration Buttons -->
+                <div class="social-buttons d-flex gap-2 mb-3">
+                  <button class="btn btn-outline-danger flex-fill">
+                    <i class="fab fa-google me-2"></i>
+                    Google
+                  </button>
+                  <button class="btn btn-outline-dark flex-fill">
+                    <i class="fab fa-github me-2"></i>
+                    GitHub
+                  </button>
+                  <button class="btn btn-outline-primary flex-fill">
+                    <i class="fab fa-facebook me-2"></i>
+                    Facebook
+                  </button>
+                </div>
+
+                <div class="text-center mb-3">
+                  <span class="text-muted">أو سجل بالبريد الإلكتروني</span>
+                </div>
+
+                <!-- Registration Form -->
+                <form [formGroup]="registerForm" (ngSubmit)="onSubmit()">
+                  
+                  <!-- Full Name Input -->
+                  <div class="mb-2">
+                    <div class="input-group">
+                      <span class="input-group-text">
+                        <i class="fas fa-user text-primary"></i>
+                      </span>
+                      <input type="text" 
+                             class="form-control" 
+                             formControlName="name"
+                             placeholder="الاسم الكامل"
+                             [class.is-invalid]="name?.invalid && (name?.dirty || name?.touched)">
+                    </div>
+                    @if (name?.invalid && (name?.dirty || name?.touched)) {
+                      <div class="invalid-feedback d-block">
+                        @if (name?.errors?.['required']) {
+                          <span>الاسم الكامل مطلوب</span>
+                        }
+                        @if (name?.errors?.['minlength']) {
+                          <span>الاسم الكامل يجب أن يحتوي على الأقل 3 أحرف</span>
+                        }
+                      </div>
+                    }
+                  </div>
+
+                  <!-- Email Input -->
+                  <div class="mb-2">
+                    <div class="input-group">
+                      <span class="input-group-text">
+                        <i class="fas fa-envelope text-primary"></i>
+                      </span>
+                      <input type="email" 
+                             class="form-control" 
+                             formControlName="email"
+                             placeholder="البريد الإلكتروني"
+                             [class.is-invalid]="email?.invalid && (email?.dirty || email?.touched)">
+                    </div>
+                    @if (email?.invalid && (email?.dirty || email?.touched)) {
+                      <div class="invalid-feedback d-block">
+                        @if (email?.errors?.['required']) {
+                          <span>البريد الإلكتروني مطلوب</span>
+                        }
+                        @if (email?.errors?.['email']) {
+                          <span>يرجى إدخال بريد إلكتروني صحيح</span>
+                        }
+                      </div>
+                    }
+                  </div>
+
+                  <!-- Username Input -->
+                  <div class="mb-2">
+                    <div class="input-group">
+                      <span class="input-group-text">
+                        <i class="fas fa-user-circle text-primary"></i>
+                      </span>
+                      <input type="text" 
+                             class="form-control" 
+                             formControlName="userName"
+                             placeholder="اسم المستخدم"
+                             [class.is-invalid]="userName?.invalid && (userName?.dirty || userName?.touched)">
+                    </div>
+                    @if (userName?.invalid && (userName?.dirty || userName?.touched)) {
+                      <div class="invalid-feedback d-block">
+                        @if (userName?.errors?.['required']) {
+                          <span>اسم المستخدم مطلوب</span>
+                        }
+                        @if (userName?.errors?.['minlength']) {
+                          <span>اسم المستخدم يجب أن يحتوي على الأقل 3 أحرف</span>
+                        }
+                        @if (userName?.errors?.['pattern']) {
+                          <span>اسم المستخدم يمكن أن يحتوي على أحرف وأرقام فقط</span>
+                        }
+                      </div>
+                    }
+                  </div>
+
+                  <!-- Phone Number Input -->
+                  <div class="mb-2">
+                    <div class="input-group">
+                      <span class="input-group-text">
+                        <i class="fas fa-phone text-primary"></i>
+                      </span>
+                      <input type="tel" 
+                             class="form-control" 
+                             formControlName="phoneNumber"
+                             placeholder="رقم الهاتف"
+                             [class.is-invalid]="phoneNumber?.invalid && (phoneNumber?.dirty || phoneNumber?.touched)">
+                    </div>
+                    @if (phoneNumber?.invalid && (phoneNumber?.dirty || phoneNumber?.touched)) {
+                      <div class="invalid-feedback d-block">
+                        @if (phoneNumber?.errors?.['required']) {
+                          <span>رقم الهاتف مطلوب</span>
+                        }
+                        @if (phoneNumber?.errors?.['pattern']) {
+                          <span>يرجى إدخال رقم هاتف صحيح</span>
+                        }
+                      </div>
+                    }
+                  </div>
+
+                  <!-- Location Input -->
+                  <div class="mb-2">
+                    <div class="input-group">
+                      <span class="input-group-text">
+                        <i class="fas fa-map-marker-alt text-primary"></i>
+                      </span>
+                      <input type="text" 
+                             class="form-control" 
+                             formControlName="location"
+                             placeholder="الموقع"
+                             [class.is-invalid]="location?.invalid && (location?.dirty || location?.touched)">
+                    </div>
+                    @if (location?.invalid && (location?.dirty || location?.touched)) {
+                      <div class="invalid-feedback d-block">
+                        @if (location?.errors?.['required']) {
+                          <span>الموقع مطلوب</span>
+                        }
+                        @if (location?.errors?.['minlength']) {
+                          <span>الموقع يجب أن يحتوي على الأقل 3 أحرف</span>
+                        }
+                      </div>
+                    }
+                  </div>
+
+                  <!-- Password Input -->
+                  <div class="mb-3">
+                    <div class="input-group">
+                      <span class="input-group-text">
+                        <i class="fas fa-lock text-primary"></i>
+                      </span>
+                      <input type="password" 
+                             class="form-control" 
+                             formControlName="password"
+                             placeholder="كلمة المرور"
+                             [class.is-invalid]="password?.invalid && (password?.dirty || password?.touched)">
+                    </div>
+                    @if (password?.invalid && (password?.dirty || password?.touched)) {
+                      <div class="invalid-feedback d-block">
+                        @if (password?.errors?.['required']) {
+                          <span>كلمة المرور مطلوبة</span>
+                        }
+                                                 @if (password?.errors?.['minlength']) {
+                           <span>كلمة المرور يجب أن تحتوي على الأقل 6 أحرف</span>
+                         }
+                      </div>
+                    }
+                  </div>
+
+                  <!-- Register Button -->
+                  <button type="submit" 
+                          class="btn btn-primary w-100 py-2 fw-bold mb-2"
+                          [disabled]="isLoading || registerForm.invalid">
+                    @if (!isLoading) {
+                      <i class="fas fa-user-plus me-2"></i>
+                    }
+                    @if (isLoading) {
+                      <i class="fas fa-spinner fa-spin me-2"></i>
+                    }
+                    {{ isLoading ? 'جاري إنشاء الحساب...' : 'إنشاء حساب' }}
+                  </button>
+                </form>
+
+                <!-- Links -->
+                <div class="text-center">
+                  <p class="text-muted">
+                    لديك حساب بالفعل؟ 
+                    <a routerLink="/auth/login" class="text-decoration-none text-primary fw-bold">
+                      تسجيل الدخول
+                    </a>
+                  </p>
+                </div>
+
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

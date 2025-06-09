@@ -1,0 +1,106 @@
+<app-navbar></app-navbar>
+
+<div class="search-container">
+  <div class="container py-5">
+    <!-- Search Section -->
+    <div class="search-section text-center mb-5">
+      <h1 class="mb-4">ابحث عن الدواء</h1>
+      <div class="search-box">
+        <div class="input-group">
+          <input 
+            type="text" 
+            class="form-control form-control-lg" 
+            placeholder="أدخل اسم الدواء..." 
+            [(ngModel)]="searchQuery"
+            (keyup.enter)="searchMedicine()"
+          >
+          <button 
+            class="btn btn-primary" 
+            type="button"
+            (click)="searchMedicine()"
+            [disabled]="loading"
+          >
+            <i class="fas fa-search me-2"></i>
+            بحث
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Loading State -->
+    <div *ngIf="loading" class="text-center py-5">
+      <div class="spinner-border text-primary" role="status">
+        <span class="visually-hidden">جاري البحث...</span>
+      </div>
+      <p class="mt-3">جاري البحث عن الدواء...</p>
+    </div>
+
+    <!-- Error Message -->
+    <div *ngIf="error" class="alert alert-danger text-center" role="alert">
+      {{ error }}
+    </div>
+
+    <!-- No Results -->
+    <div *ngIf="noResults" class="text-center py-5">
+      <i class="fas fa-search fa-3x text-muted mb-3"></i>
+      <h3>لم يتم العثور على نتائج</h3>
+      <p class="text-muted">جرب البحث بكلمات مختلفة</p>
+    </div>
+
+    <!-- Search Results -->
+    <div *ngIf="searchResults" class="search-results">
+      <!-- Medicine Details -->
+      <div class="medicine-details card mb-4">
+        <div class="card-body">
+          <div class="row align-items-center">
+            <div class="col-md-2">
+              <img [src]="searchResults.medicine.image" class="img-fluid rounded" [alt]="searchResults.medicine.name">
+            </div>
+            <div class="col-md-10">
+              <h2 class="card-title">{{ searchResults.medicine.name }}</h2>
+              <p class="card-text">{{ searchResults.medicine.description }}</p>
+              <p class="card-text"><strong>السعر:</strong> {{ searchResults.medicine.price }} ريال</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Available Pharmacies -->
+      <h3 class="mb-4">الصيدليات المتوفرة بها الدواء</h3>
+      <div class="row">
+        <div *ngFor="let pharmacy of searchResults.pharmacies" class="col-md-6 mb-4">
+          <div class="card pharmacy-card h-100">
+            <div class="card-body">
+              <h4 class="card-title">{{ pharmacy.name }}</h4>
+              <p class="card-text">
+                <i class="fas fa-map-marker-alt text-primary me-2"></i>
+                {{ pharmacy.address }}
+              </p>
+              <p class="card-text">
+                <i class="fas fa-phone text-primary me-2"></i>
+                {{ pharmacy.phone }}
+              </p>
+              <p class="card-text" *ngIf="pharmacy.distance">
+                <i class="fas fa-walking text-primary me-2"></i>
+                {{ pharmacy.distance }} كم
+              </p>
+              <div class="d-flex gap-2 mt-3">
+                <button class="btn btn-outline-primary" (click)="getDirections(pharmacy)">
+                  <i class="fas fa-directions me-2"></i>
+                  الاتجاهات
+                </button>
+                <button class="btn btn-outline-success" (click)="callPharmacy(pharmacy.phone)">
+                  <i class="fas fa-phone me-2"></i>
+                  اتصل
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div> 
+
+<!-- Chat Widget -->
+<app-chat-widget></app-chat-widget> 

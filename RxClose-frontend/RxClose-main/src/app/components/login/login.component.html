@@ -1,0 +1,170 @@
+<div class="login-container">
+  <div class="container-fluid vh-100 d-flex align-items-center justify-content-center">
+    <div class="row w-100">
+      <div class="col-lg-8 col-md-10 col-sm-12 mx-auto">
+        <div class="card shadow-lg border-0 rounded-4">
+          <div class="row g-0 h-100">
+            
+            <!-- Login Form Section -->
+            <div class="col-lg-6 d-flex align-items-center">
+              <div class="card-body p-5 w-100">
+                
+                <!-- Logo Section -->
+                <div class="text-center mb-4">
+                  <div class="logo-icon mx-auto mb-3">
+                    <i class="fas fa-pills"></i>
+                  </div>
+                  <h2 class="fw-bold text-primary mb-2">تسجيل الدخول</h2>
+                  <p class="text-muted">مرحباً بعودتك إلى RxClose</p>
+                </div>
+
+                <!-- Alert Messages -->
+                @if (errorMessage) {
+                  <div class="alert alert-danger alert-dismissible fade show mb-4">
+                    <i class="fas fa-exclamation-circle me-2"></i>
+                    {{ errorMessage }}
+                    <button type="button" class="btn-close" (click)="errorMessage = ''"></button>
+                  </div>
+                }
+
+                <!-- Social Login Buttons -->
+                <div class="social-buttons d-flex gap-2 mb-4">
+                  <button class="btn btn-outline-danger flex-fill">
+                    <i class="fab fa-google me-2"></i>
+                    Google
+                  </button>
+                  <button class="btn btn-outline-dark flex-fill">
+                    <i class="fab fa-github me-2"></i>
+                    GitHub
+                  </button>
+                  <button class="btn btn-outline-primary flex-fill">
+                    <i class="fab fa-facebook me-2"></i>
+                    Facebook
+                  </button>
+                </div>
+
+                <div class="text-center mb-4">
+                  <span class="text-muted">أو سجل الدخول بالبريد الإلكتروني</span>
+                </div>
+
+                <!-- Login Form -->
+                <form [formGroup]="loginForm" (ngSubmit)="onSubmit()">
+                  
+                  <!-- Email Input -->
+                  <div class="mb-4">
+                    <div class="input-group">
+                      <span class="input-group-text">
+                        <i class="fas fa-envelope text-primary"></i>
+                      </span>
+                      <input type="email" 
+                             class="form-control" 
+                             formControlName="email"
+                             placeholder="البريد الإلكتروني"
+                             [class.is-invalid]="email?.invalid && (email?.dirty || email?.touched)">
+                    </div>
+                    @if (email?.invalid && (email?.dirty || email?.touched)) {
+                      <div class="invalid-feedback d-block">
+                        @if (email?.errors?.['required']) {
+                          <span>البريد الإلكتروني مطلوب</span>
+                        }
+                        @if (email?.errors?.['email']) {
+                          <span>يرجى إدخال بريد إلكتروني صحيح</span>
+                        }
+                      </div>
+                    }
+                  </div>
+
+                  <!-- Password Input -->
+                  <div class="mb-4">
+                    <div class="input-group">
+                      <span class="input-group-text">
+                        <i class="fas fa-lock text-primary"></i>
+                      </span>
+                      <input type="password" 
+                             class="form-control" 
+                             formControlName="password"
+                             placeholder="كلمة المرور"
+                             [class.is-invalid]="password?.invalid && (password?.dirty || password?.touched)">
+                    </div>
+                    @if (password?.invalid && (password?.dirty || password?.touched)) {
+                      <div class="invalid-feedback d-block">
+                        @if (password?.errors?.['required']) {
+                          <span>كلمة المرور مطلوبة</span>
+                        }
+                        @if (password?.errors?.['minlength']) {
+                          <span>كلمة المرور يجب أن تحتوي على الأقل 8 أحرف</span>
+                        }
+                      </div>
+                    }
+                  </div>
+
+                  <!-- Login Button -->
+                  <button type="submit" 
+                          class="btn btn-primary w-100 py-3 fw-bold mb-3"
+                          [disabled]="isLoading || loginForm.invalid">
+                    @if (!isLoading) {
+                      <i class="fas fa-sign-in-alt me-2"></i>
+                    }
+                    @if (isLoading) {
+                      <i class="fas fa-spinner fa-spin me-2"></i>
+                    }
+                    {{ isLoading ? 'جاري تسجيل الدخول...' : 'تسجيل الدخول' }}
+                  </button>
+                </form>
+
+                <!-- Links -->
+                <div class="text-center">
+                  <p class="mb-2">
+                    <a routerLink="/auth/forgot-password" class="text-decoration-none text-primary">
+                      <i class="fas fa-key me-1"></i>
+                      نسيت كلمة المرور؟
+                    </a>
+                  </p>
+                  <p class="text-muted">
+                    ليس لديك حساب؟ 
+                    <a routerLink="/auth/register" class="text-decoration-none text-primary fw-bold">
+                      إنشاء حساب جديد
+                    </a>
+                  </p>
+                </div>
+
+              </div>
+            </div>
+
+            <!-- Image Section -->
+            <div class="col-lg-6 d-none d-lg-block position-relative">
+              <div class="image-section h-100 d-flex align-items-center justify-content-center">
+                <div class="overlay"></div>
+                <div class="image-content text-center text-white position-relative z-index-2">
+                  <div class="mb-4">
+                    <i class="fas fa-heartbeat display-1 mb-3"></i>
+                  </div>
+                  <h3 class="fw-bold mb-3">مرحباً بعودتك!</h3>
+                  <p class="lead mb-4">
+                    يرجى تسجيل الدخول إلى حسابك بالتفاصيل المعطاة للمتابعة
+                  </p>
+                  <div class="features">
+                    <div class="feature-item mb-2">
+                      <i class="fas fa-check-circle me-2"></i>
+                      وصول سريع للأدوية
+                    </div>
+                    <div class="feature-item mb-2">
+                      <i class="fas fa-check-circle me-2"></i>
+                      خدمة عملاء 24/7
+                    </div>
+                    <div class="feature-item">
+                      <i class="fas fa-check-circle me-2"></i>
+                      توصيل مجاني
+                    </div>
+                  </div>
+                </div>
+                <img src="assets/images/login.jpeg" alt="تسجيل الدخول" class="position-absolute top-0 start-0 w-100 h-100 object-fit-cover">
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

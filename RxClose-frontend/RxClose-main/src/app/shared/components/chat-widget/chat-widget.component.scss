@@ -1,0 +1,238 @@
+.chat-widget {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  z-index: 1000;
+}
+
+.chat-icon {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background-color: #007bff;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+  transition: transform 0.3s ease;
+
+  &:hover {
+    transform: scale(1.1);
+  }
+
+  img {
+    width: 30px;
+    height: 30px;
+    object-fit: contain;
+  }
+}
+
+.chat-window {
+  position: fixed;
+  bottom: 90px;
+  right: 20px;
+  width: 350px;
+  height: 500px;
+  background: white;
+  border-radius: 10px;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  visibility: hidden;
+  opacity: 0;
+  transform: translateY(20px);
+  transition: all 0.3s ease;
+
+  &.open {
+    visibility: visible;
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.chat-header {
+  background: #007bff;
+  color: white;
+  padding: 15px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+
+  .chat-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+
+    .chat-avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: white;
+      padding: 5px;
+    }
+
+    h5 {
+      margin: 0;
+      font-size: 1.1rem;
+    }
+
+    small {
+      opacity: 0.8;
+    }
+  }
+
+  .close-btn {
+    background: none;
+    border: none;
+    color: white;
+    font-size: 24px;
+    cursor: pointer;
+    padding: 0;
+    line-height: 1;
+  }
+}
+
+.chat-messages {
+  flex: 1;
+  padding: 15px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+
+  .message {
+    max-width: 80%;
+    padding: 10px 15px;
+    border-radius: 15px;
+    position: relative;
+
+    &.user {
+      align-self: flex-end;
+      background: #007bff;
+      color: white;
+      border-bottom-right-radius: 5px;
+    }
+
+    &.bot {
+      align-self: flex-start;
+      background: #f0f0f0;
+      color: #333;
+      border-bottom-left-radius: 5px;
+    }
+
+    .message-time {
+      font-size: 0.7rem;
+      opacity: 0.7;
+      margin-top: 5px;
+      display: block;
+    }
+
+    &.loading {
+      .typing-indicator {
+        display: flex;
+        gap: 4px;
+        padding: 8px 12px;
+        
+        span {
+          width: 8px;
+          height: 8px;
+          background: #007bff;
+          border-radius: 50%;
+          animation: typing 1s infinite ease-in-out;
+          
+          &:nth-child(1) { animation-delay: 0.2s; }
+          &:nth-child(2) { animation-delay: 0.4s; }
+          &:nth-child(3) { animation-delay: 0.6s; }
+        }
+      }
+    }
+  }
+}
+
+@keyframes typing {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-5px); }
+}
+
+.quick-actions {
+  padding: 10px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  border-top: 1px solid #eee;
+
+  .action-btn {
+    flex: 1 1 calc(33.333% - 5px);
+    min-width: 80px;
+    padding: 8px 6px;
+    border: 1px solid #007bff;
+    background: white;
+    color: #007bff;
+    border-radius: 20px;
+    cursor: pointer;
+    font-size: 0.8rem;
+    transition: all 0.3s ease;
+    text-align: center;
+
+    &:hover {
+      background: #007bff;
+      color: white;
+      transform: translateY(-1px);
+    }
+
+    &:active {
+      transform: translateY(0);
+    }
+  }
+}
+
+.chat-input {
+  padding: 10px;
+  display: flex;
+  gap: 10px;
+  border-top: 1px solid #eee;
+
+  input {
+    flex: 1;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 20px;
+    outline: none;
+    transition: border-color 0.3s ease;
+
+    &:focus {
+      border-color: #007bff;
+    }
+
+    &:disabled {
+      background-color: #f5f5f5;
+      cursor: not-allowed;
+    }
+  }
+
+  .send-btn {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: #007bff;
+    color: white;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 0.3s ease;
+
+    &:hover:not(:disabled) {
+      background: #0056b3;
+    }
+
+    &:disabled {
+      background-color: #cccccc;
+      cursor: not-allowed;
+    }
+  }
+}
