@@ -1,0 +1,9 @@
+{
+  "phoneNumber": 1234567890,
+  "name": "Super Admin",
+  "userName": "superadmin",
+  "password": "Admin@123",
+  "email": "superadmin@rxclose.com",
+  "location": "System",
+  "role": "superadmin"
+} 
