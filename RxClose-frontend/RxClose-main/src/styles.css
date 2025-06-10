@@ -9,6 +9,47 @@
   padding: 0;
 }
 
+/* Smooth scrolling for the entire application */
+html {
+  scroll-behavior: smooth;
+  scroll-padding-top: 80px; /* Offset for fixed navbar */
+}
+
+/* Enhanced scrolling for all scrollable elements */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #667eea #f1f1f1;
+}
+
+/* Webkit scrollbar styling */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  border-radius: 10px;
+  transition: all 0.3s ease;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(135deg, #764ba2, #667eea);
+  transform: scale(1.1);
+}
+
+/* Smooth transitions for all elements */
+*,
+*::before,
+*::after {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
 body {
   font-family: 'Cairo', 'Tajawal', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
   line-height: 1.6;
@@ -77,3 +118,272 @@ body {
 .p-2 { padding: 0.5rem; }
 .p-3 { padding: 1rem; }
 .p-4 { padding: 1.5rem; }
+
+/* Cart page button fixes */
+app-cartpage button,
+app-cartpage .btn {
+  position: relative !important;
+  z-index: 10 !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+
+app-cartpage button i,
+app-cartpage .btn i,
+app-cartpage button .fas,
+app-cartpage .btn .fas {
+  visibility: visible !important;
+  opacity: 1 !important;
+  display: inline-block !important;
+}
+
+/* Force remove button visibility */
+app-cartpage .remove-btn {
+  background: linear-gradient(135deg, #ef4444, #dc2626) !important;
+  color: white !important;
+  border: 2px solid #ef4444 !important;
+}
+
+/* Force checkout button visibility */
+app-cartpage .checkout-btn {
+  background: linear-gradient(135deg, #667eea, #764ba2) !important;
+  color: white !important;
+  border: 2px solid #667eea !important;
+}
+
+/* Force quantity button visibility */
+app-cartpage .quantity-btn {
+  background: white !important;
+  color: #667eea !important;
+  border: 2px solid #667eea !important;
+}
+
+/* Order summary text fixes */
+app-cartpage .order-summary .summary-label {
+  color: #4a5568 !important;
+  font-weight: 500 !important;
+}
+
+app-cartpage .order-summary .summary-value {
+  color: #1a202c !important;
+  font-weight: 600 !important;
+}
+
+app-cartpage .order-summary .summary-value.free {
+  color: #10b981 !important;
+}
+
+app-cartpage .order-summary .summary-value.discount {
+  color: #ef4444 !important;
+}
+
+app-cartpage .order-summary .total-label {
+  color: #1a202c !important;
+  font-weight: 700 !important;
+}
+
+app-cartpage .order-summary .total-value {
+  color: #667eea !important;
+  font-weight: 700 !important;
+}
+
+app-cartpage .order-summary .summary-title {
+  color: white !important;
+}
+
+app-cartpage .order-summary .summary-content {
+  color: #1a202c !important;
+}
+
+app-cartpage .order-summary .summary-header {
+  color: white !important;
+}
+
+app-cartpage .order-summary .summary-header .summary-title {
+  color: white !important;
+}
+
+app-cartpage .order-summary .summary-header .summary-title i {
+  color: white !important;
+}
+
+/* Promo code section fixes */
+app-cartpage .promo-code-section .promo-title {
+  color: #1a202c !important;
+}
+
+app-cartpage .apply-promo-btn {
+  position: relative !important;
+  z-index: 10 !important;
+  background: white !important;
+  color: #667eea !important;
+  border: 2px solid #667eea !important;
+  flex-shrink: 0 !important;
+}
+
+/* Additional cart page fixes */
+app-cartpage .qty-btn {
+  background: white !important;
+  color: #667eea !important;
+  border: 2px solid #667eea !important;
+  width: 35px !important;
+  height: 35px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  border-radius: 50% !important;
+  font-size: 14px !important;
+  font-weight: bold !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  position: relative !important;
+  z-index: 10 !important;
+}
+
+app-cartpage .qty-btn:hover {
+  background: #667eea !important;
+  color: white !important;
+}
+
+app-cartpage .qty-btn:disabled {
+  background: #f5f5f5 !important;
+  color: #ccc !important;
+  border-color: #ddd !important;
+}
+
+app-cartpage .qty-btn i,
+app-cartpage .qty-btn .fas {
+  color: inherit !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  display: inline-block !important;
+}
+
+/* Cart item text fixes */
+app-cartpage .item-name {
+  color: #1a202c !important;
+  font-weight: 700 !important;
+}
+
+app-cartpage .item-pharmacy {
+  color: #4a5568 !important;
+}
+
+app-cartpage .item-price .price {
+  color: white !important;
+  background: #10b981 !important;
+}
+
+app-cartpage .quantity {
+  color: #1a202c !important;
+  background: white !important;
+  padding: 0.5rem !important;
+  border-radius: 6px !important;
+  border: 1px solid #e2e8f0 !important;
+  min-width: 45px !important;
+  text-align: center !important;
+  font-weight: 700 !important;
+}
+
+app-cartpage .total-price {
+  color: #667eea !important;
+  font-weight: 700 !important;
+}
+
+app-cartpage .total-label {
+  color: #718096 !important;
+}
+
+/* Section headers */
+app-cartpage .section-title {
+  color: #1a202c !important;
+}
+
+app-cartpage .section-title i {
+  color: #667eea !important;
+}
+
+/* Clear cart button */
+app-cartpage .clear-cart-btn {
+  background: #ef4444 !important;
+  color: white !important;
+  border: 2px solid #ef4444 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 0.5rem !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  position: relative !important;
+  z-index: 10 !important;
+  box-shadow: 0 2px 4px rgba(239, 68, 68, 0.3) !important;
+}
+
+app-cartpage .clear-cart-btn:hover {
+  background: #dc2626 !important;
+  border-color: #dc2626 !important;
+  color: white !important;
+}
+
+app-cartpage .clear-cart-btn i {
+  color: white !important;
+  display: inline-block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+
+/* Continue shopping button */
+app-cartpage .btn-secondary {
+  background: white !important;
+  color: #667eea !important;
+  border: 2px solid #667eea !important;
+}
+
+app-cartpage .btn-secondary:hover {
+  background: #667eea !important;
+  color: white !important;
+}
+
+/* Empty cart state */
+app-cartpage .empty-cart-title {
+  color: #1a202c !important;
+}
+
+app-cartpage .empty-cart-text {
+  color: #4a5568 !important;
+}
+
+app-cartpage .btn-start-shopping {
+  background: linear-gradient(135deg, #667eea, #764ba2) !important;
+  color: white !important;
+  border: none !important;
+}
+
+/* Force visibility for all text elements */
+app-cartpage * {
+  visibility: visible !important;
+}
+
+app-cartpage span,
+app-cartpage p,
+app-cartpage h1,
+app-cartpage h2,
+app-cartpage h3,
+app-cartpage h4,
+app-cartpage h5,
+app-cartpage h6,
+app-cartpage div {
+  opacity: 1 !important;
+}
+
+/* Button hover effects */
+app-cartpage button:hover {
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
+app-cartpage button:hover i,
+app-cartpage button:hover .fas {
+  opacity: 1 !important;
+  visibility: visible !important;
+}

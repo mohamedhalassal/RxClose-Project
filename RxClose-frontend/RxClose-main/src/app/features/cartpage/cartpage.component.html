@@ -1,134 +1,203 @@
-<!-- Navigation Bar -->
-<nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm">
-  <div class="container">
-    <!-- Logo -->
-    <a class="navbar-brand" routerLink="/auth/home">
-      <img src="assets/images/RxClose-Logo.PNG" alt="RxClose Logo" height="50" class="d-inline-block align-text-top">
-    </a>
+<!-- الناف بار -->
+<app-navbar></app-navbar>
 
-    <!-- Mobile Toggle Button -->
-    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-      <span class="navbar-toggler-icon"></span>
-    </button>
-
-    <!-- Navigation Items -->
-    <div class="collapse navbar-collapse" id="navbarNav">
-      <ul class="navbar-nav me-auto">
-        <li class="nav-item">
-          <a class="nav-link" routerLink="/auth/home" routerLinkActive="active">Home</a>
-        </li>
-        <li class="nav-item">
-          <a class="nav-link" routerLink="/auth/search" routerLinkActive="active">Search</a>
-        </li>
-        <li class="nav-item dropdown">
-          <a class="nav-link dropdown-toggle" href="#" id="categoryDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-            Category
-          </a>
-          <ul class="dropdown-menu" aria-labelledby="categoryDropdown">
-            <li><a class="dropdown-item" routerLink="/auth/category/drugs">Drugs</a></li>
-            <li><a class="dropdown-item" routerLink="/auth/category/medical-supplies">Medical Supplies</a></li>
-            <li><a class="dropdown-item" routerLink="/auth/category/fitness-nutrition">Fitness & Nutrition</a></li>
-            <li><a class="dropdown-item" routerLink="/auth/category/organic-herbal">Organic & Herbal Product</a></li>
-            <li><a class="dropdown-item" routerLink="/auth/category/home-care">Home Care</a></li>
-          </ul>
-        </li>
-        <li class="nav-item">
-          <a class="nav-link" routerLink="/auth/contact" routerLinkActive="active">Contact Us</a>
-        </li>
-      </ul>
-
-      <!-- Right Side Items -->
-      <ul class="navbar-nav">
-        <li class="nav-item">
-          <a class="nav-link" routerLink="/auth/cart" routerLinkActive="active">
-            <i class="fas fa-shopping-cart"></i>
-            <span class="badge bg-danger rounded-pill ms-1">{{ cartItems.length }}</span>
-          </a>
-        </li>
-        <li class="nav-item">
-          <a class="nav-link" routerLink="/auth/profile" routerLinkActive="active">
-            <i class="fas fa-user"></i>
-          </a>
-        </li>
-        <li class="nav-item">
-          <button class="btn btn-outline-danger" (click)="logout()">
-            <i class="fas fa-sign-out-alt me-2"></i>تسجيل الخروج
-          </button>
-        </li>
-      </ul>
-    </div>
+<!-- صفحة سلة التسوق -->
+<main class="cart-page" dir="rtl">
+  <!-- خلفية متحركة -->
+  <div class="animated-background">
+    <div class="gradient-layer"></div>
+    <div class="pattern-layer"></div>
   </div>
-</nav>
 
-<!-- Cart Content -->
-<div class="container py-5">
-  <h2 class="mb-4">سلة التسوق</h2>
+  <!-- العنوان الرئيسي -->
+  <section class="hero-section">
+    <div class="container">
+      <div class="hero-content">
+        <div class="hero-icon">
+          <i class="fas fa-shopping-cart"></i>
+        </div>
+        <h1 class="page-title">سلة التسوق</h1>
+        <p class="page-subtitle">مراجعة وإدارة منتجاتك المختارة</p>
+        <div class="cart-stats">
+          <span class="stats-item">
+            <i class="fas fa-box"></i>
+            {{ cartItems.length }} منتج
+          </span>
+          <span class="stats-item">
+            <i class="fas fa-money-bill-wave"></i>
+            {{ total | number:'1.2-2' }} ج.م
+          </span>
+        </div>
+      </div>
+    </div>
+  </section>
 
-  <div class="row">
-    <div class="col-md-8">
-      <!-- Cart Items -->
-      <div class="card mb-4">
-        <div class="card-body">
-          <div *ngIf="cartItems.length === 0" class="text-center py-5">
-            <i class="fas fa-shopping-cart fa-3x mb-3 text-muted"></i>
-            <h4>سلة التسوق فارغة</h4>
-            <p class="text-muted">لم تقم بإضافة أي منتجات إلى السلة بعد</p>
-            <button class="btn btn-primary mt-3" routerLink="/auth/home">تصفح المنتجات</button>
+  <!-- محتوى السلة -->
+  <section class="cart-content">
+    <div class="container">
+      <!-- حالة السلة الفارغة -->
+      <div *ngIf="cartItems.length === 0" class="empty-cart">
+        <div class="empty-cart-icon">
+          <i class="fas fa-shopping-cart"></i>
+        </div>
+        <h2 class="empty-cart-title">سلة التسوق فارغة</h2>
+        <p class="empty-cart-text">
+          لم تقم بإضافة أي منتجات إلى السلة بعد. ابدأ التسوق الآن واكتشف منتجاتنا المميزة!
+        </p>
+        <a routerLink="/auth/home" class="btn-start-shopping">
+          <i class="fas fa-shopping-bag"></i>
+          ابدأ التسوق الآن
+        </a>
+      </div>
+
+      <!-- محتوى السلة -->
+      <div *ngIf="cartItems.length > 0" class="cart-layout">
+        <!-- منتجات السلة -->
+        <div class="cart-items-section">
+          <div class="section-header">
+            <h3 class="section-title">
+              <i class="fas fa-list"></i>
+              منتجاتك المختارة ({{ cartItems.length }})
+            </h3>
+            <button class="clear-cart-btn" (click)="clearCart()">
+              <i class="fas fa-trash"></i>
+              إفراغ السلة
+            </button>
           </div>
 
-          <div *ngFor="let item of cartItems" class="cart-item mb-3 pb-3 border-bottom">
-            <div class="row align-items-center">
-              <div class="col-md-2">
-                <img [src]="item.image || 'assets/images/placeholder.jpg'" class="img-fluid rounded" alt="{{ item.name }}">
+          <!-- قائمة المنتجات -->
+          <div class="cart-items-list">
+            <div *ngFor="let item of cartItems; let i = index" class="cart-item">
+              <div class="item-number">{{ i + 1 }}</div>
+              
+              <div class="item-image">
+                <img [src]="item.imageUrl || 'assets/images/placeholder.jpg'" 
+                     [alt]="item.name" 
+                     class="product-img">
               </div>
-              <div class="col-md-4">
-                <h5 class="mb-1">{{ item.name }}</h5>
-                <p class="text-muted mb-0">السعر: {{ item.price | currency:'EGP' }}</p>
-              </div>
-              <div class="col-md-3">
-                <div class="input-group">
-                  <button class="btn btn-outline-secondary" (click)="updateQuantity(item, item.quantity - 1)">-</button>
-                  <input type="number" class="form-control text-center" [(ngModel)]="item.quantity" (change)="updateQuantity(item, item.quantity)" min="1">
-                  <button class="btn btn-outline-secondary" (click)="updateQuantity(item, item.quantity + 1)">+</button>
+
+              <div class="item-details">
+                <h4 class="item-name">{{ item.name }}</h4>
+                <p class="item-pharmacy">
+                  <i class="fas fa-clinic-medical"></i>
+                  {{ item.pharmacyName || 'RxClose' }}
+                </p>
+                <div class="item-price">
+                  <span class="price">{{ item.price }} ج.م</span>
                 </div>
               </div>
-              <div class="col-md-2 text-end">
-                <button class="btn btn-outline-danger" (click)="removeItem(item.id)">
-                  <i class="fas fa-trash"></i>
-                </button>
+
+                             <div class="item-actions">
+                 <!-- تحكم في الكمية -->
+                 <div class="quantity-control">
+                   <button type="button" 
+                           class="qty-btn minus" 
+                           (click)="decreaseQuantity(item)"
+                           [disabled]="item.quantity <= 1"
+                           title="تقليل الكمية">
+                     <i class="fas fa-minus"></i>
+                   </button>
+                   <span class="quantity">{{ item.quantity }}</span>
+                   <button type="button" 
+                           class="qty-btn plus" 
+                           (click)="increaseQuantity(item)"
+                           title="زيادة الكمية">
+                     <i class="fas fa-plus"></i>
+                   </button>
+                 </div>
+
+                 <!-- إجمالي السعر -->
+                 <div class="item-total">
+                   <span class="total-label">الإجمالي:</span>
+                   <span class="total-price">{{ getItemTotal(item) | number:'1.2-2' }} ج.م</span>
+                 </div>
+
+                 <!-- زر الحذف -->
+                 <button type="button" 
+                         class="remove-btn" 
+                         (click)="removeItem(item)"
+                         title="حذف المنتج">
+                   <i class="fas fa-trash-alt"></i>
+                 </button>
+               </div>
+            </div>
+          </div>
+
+          <!-- أزرار الإجراءات -->
+          <div class="cart-actions">
+            <a routerLink="/auth/search" class="btn-secondary">
+              <i class="fas fa-arrow-right"></i>
+              متابعة التسوق
+            </a>
+          </div>
+        </div>
+
+        <!-- ملخص الطلب -->
+        <div class="order-summary">
+          <div class="summary-header">
+            <h3 class="summary-title">
+              <i class="fas fa-receipt"></i>
+              ملخص الطلب
+            </h3>
+          </div>
+
+                     <div class="summary-content">
+             <div class="summary-row">
+               <span class="label">عدد المنتجات:</span>
+               <span class="value">{{ cartItems.length }} منتج</span>
+             </div>
+
+             <div class="summary-row">
+               <span class="label">عدد القطع:</span>
+               <span class="value">{{ getTotalQuantity() }} قطعة</span>
+             </div>
+
+             <div class="summary-row">
+               <span class="label">المجموع الفرعي:</span>
+               <span class="value">{{ total | number:'1.2-2' }} ج.م</span>
+             </div>
+
+             <div class="summary-row">
+               <span class="label">رسوم الشحن:</span>
+               <span class="value free">مجاني</span>
+             </div>
+
+             <div class="summary-row">
+               <span class="label">الضرائب (14%):</span>
+               <span class="value">{{ (total * 0.14) | number:'1.2-2' }} ج.م</span>
+             </div>
+
+             <hr class="divider">
+
+             <div class="summary-row total-row">
+               <span class="label">الإجمالي النهائي:</span>
+               <span class="value">{{ getTotalWithTax() | number:'1.2-2' }} ج.م</span>
+             </div>
+           </div>
+
+           <div class="summary-actions">
+             <button type="button" 
+                     class="checkout-btn" 
+                     (click)="proceedToCheckout()"
+                     [disabled]="cartItems.length === 0">
+               <i class="fas fa-credit-card"></i>
+               إتمام الطلب الآن
+             </button>
+
+            <div class="payment-methods">
+              <span class="payment-label">طرق الدفع:</span>
+              <div class="payment-icons">
+                <i class="fab fa-cc-visa"></i>
+                <i class="fab fa-cc-mastercard"></i>
+                <i class="fas fa-money-bill-wave"></i>
               </div>
             </div>
           </div>
         </div>
       </div>
     </div>
+  </section>
+</main>
 
-    <!-- Order Summary -->
-    <div class="col-md-4">
-      <div class="card">
-        <div class="card-body">
-          <h5 class="card-title mb-4">ملخص الطلب</h5>
-          <div class="d-flex justify-content-between mb-3">
-            <span>المجموع الفرعي</span>
-            <span>{{ total | currency:'EGP' }}</span>
-          </div>
-          <div class="d-flex justify-content-between mb-3">
-            <span>الشحن</span>
-            <span>مجاني</span>
-          </div>
-          <hr>
-          <div class="d-flex justify-content-between mb-4">
-            <strong>الإجمالي</strong>
-            <strong>{{ total | currency:'EGP' }}</strong>
-          </div>
-          <button class="btn btn-primary w-100" [disabled]="cartItems.length === 0">
-            إتمام الطلب
-          </button>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- Chat Widget -->
-<app-chat-widget></app-chat-widget> 
+<!-- الفوتر -->
+<app-footer></app-footer> 

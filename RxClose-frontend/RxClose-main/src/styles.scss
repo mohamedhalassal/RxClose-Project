@@ -39,14 +39,66 @@ p, h1, h2, h3, h4, h5, h6 {
   font-family: 'Font Awesome 6 Free', 'Font Awesome 6 Brands' !important;
 }
 
-/* Button Animations */
+/* Enhanced Button Styles */
 .btn {
   transition: all 0.3s ease;
+  font-family: 'Cairo', sans-serif;
+  border-radius: 8px;
+  font-weight: 600;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  cursor: pointer;
 }
 
-.btn:hover {
+.btn-primary {
+  background: linear-gradient(135deg, #667eea, #5a6fd8);
+  color: white;
+  border: 2px solid #667eea;
+}
+
+.btn-primary:hover {
+  background: linear-gradient(135deg, #5a6fd8, #4c63d2);
+  border-color: #5a6fd8;
+  color: white;
   transform: translateY(-2px);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+}
+
+.btn-outline {
+  background: white;
+  color: #4a5568;
+  border: 2px solid #e2e8f0;
+}
+
+.btn-outline:hover {
+  border-color: #667eea;
+  color: #667eea;
+  background: rgba(102, 126, 234, 0.1);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.2);
+}
+
+.btn-secondary {
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  color: white;
+  border: 2px solid #667eea;
+}
+
+.btn-secondary:hover {
+  background: linear-gradient(135deg, #5a6fd8, #6b46c1);
+  border-color: #5a6fd8;
+  color: white;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+}
+
+/* Product Description Fix */
+.product-description {
+  color: #2d3748 !important;
+  font-weight: 500 !important;
 }
 
 /* Utility Classes */
@@ -58,7 +110,61 @@ p, h1, h2, h3, h4, h5, h6 {
 .d-block { display: block; }
 .d-none { display: none; }
 
-/* Smooth Transitions */
-* {
-  transition: all 0.3s ease;
+/* Enhanced Submit Button Global Styles */
+@keyframes gradientMoveGlobal {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+.submit-btn,
+.enhanced-submit-btn,
+button[type="submit"] {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%) !important;
+  background-size: 200% 200% !important;
+  color: white !important;
+  border: none !important;
+  padding: 1.2rem 3rem !important;
+  border-radius: 50px !important;
+  font-size: 1.1rem !important;
+  font-weight: 600 !important;
+  cursor: pointer !important;
+  transition: all 0.3s ease !important;
+  min-width: 200px !important;
+  box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4) !important;
+  position: relative !important;
+  overflow: hidden !important;
+  animation: gradientMoveGlobal 3s ease infinite !important;
+  font-family: 'Cairo', sans-serif !important;
+}
+
+.submit-btn:hover:not(:disabled),
+.enhanced-submit-btn:hover:not(:disabled),
+button[type="submit"]:hover:not(:disabled) {
+  transform: translateY(-3px) scale(1.05) !important;
+  box-shadow: 0 15px 40px rgba(102, 126, 234, 0.6) !important;
+  animation-play-state: paused !important;
+  background-position: 100% 100% !important;
+}
+
+.submit-btn:active:not(:disabled),
+.enhanced-submit-btn:active:not(:disabled),
+button[type="submit"]:active:not(:disabled) {
+  transform: translateY(-1px) scale(1.02) !important;
+  box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4) !important;
+}
+
+.submit-btn:disabled,
+.enhanced-submit-btn:disabled,
+button[type="submit"]:disabled {
+  opacity: 0.7 !important;
+  cursor: not-allowed !important;
+  transform: none !important;
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.2) !important;
 }

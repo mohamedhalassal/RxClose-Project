@@ -6,6 +6,52 @@
       <img src="assets/images/RxClose-Logo.PNG" alt="RxClose Logo" height="50" class="d-inline-block align-text-top">
     </a>
 
+    <!-- Search Bar -->
+    <div class="search-container d-none d-lg-block">
+      <div class="search-box">
+        <i class="fas fa-search search-icon"></i>
+        <input 
+          type="text" 
+          [(ngModel)]="searchTerm" 
+          (input)="searchProducts()"
+          placeholder="Search medicines, vitamins, medical supplies..."
+          class="search-input">
+        <button 
+          *ngIf="searchTerm" 
+          (click)="clearSearch()" 
+          class="clear-search-btn">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+      
+      <!-- Search Results Dropdown -->
+      <div *ngIf="searchResults.length > 0 || isSearching" class="search-results">
+        <div *ngIf="isSearching" class="search-loading">
+          <i class="fas fa-spinner fa-spin"></i>
+          <span>Searching...</span>
+        </div>
+        
+        <div *ngFor="let product of searchResults" class="search-result-item" (click)="viewProductDetails(product)">
+          <img [src]="product.imageUrl" [alt]="product.name" class="result-image">
+          <div class="result-info">
+            <h4 class="result-name">{{ product.name }}</h4>
+            <p class="result-price">{{ product.price | currency:'EGP':'symbol':'1.2-2' }}</p>
+            <div class="result-pharmacy">
+              <i class="fas fa-store"></i>
+              <span>{{ product.sellerName }}</span>
+              <span *ngIf="product.distance" class="distance">
+                <i class="fas fa-map-marker-alt"></i>
+                {{ product.distance }}km away
+              </span>
+            </div>
+          </div>
+          <button (click)="addToCart(product); $event.stopPropagation()" class="quick-add-btn">
+            <i class="fas fa-plus"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+
     <!-- Mobile Toggle Button -->
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
       <span class="navbar-toggler-icon"></span>
@@ -20,18 +66,7 @@
         <li class="nav-item">
           <a class="nav-link" routerLink="/auth/search" routerLinkActive="active">Search</a>
         </li>
-        <li class="nav-item dropdown">
-          <a class="nav-link dropdown-toggle" href="#" id="categoryDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-            Category
-          </a>
-          <ul class="dropdown-menu" aria-labelledby="categoryDropdown">
-            <li><a class="dropdown-item" routerLink="/auth/category/drugs">Drugs</a></li>
-            <li><a class="dropdown-item" routerLink="/auth/category/medical-supplies">Medical Supplies</a></li>
-            <li><a class="dropdown-item" routerLink="/auth/category/fitness-nutrition">Fitness & Nutrition</a></li>
-            <li><a class="dropdown-item" routerLink="/auth/category/organic-herbal">Organic & Herbal Product</a></li>
-            <li><a class="dropdown-item" routerLink="/auth/category/home-care">Home Care</a></li>
-          </ul>
-        </li>
+
         <li class="nav-item">
           <a class="nav-link" routerLink="/auth/contact" routerLinkActive="active">Contact Us</a>
         </li>
@@ -42,7 +77,7 @@
         <li class="nav-item">
           <a class="nav-link" routerLink="/auth/cart" routerLinkActive="active">
             <i class="fas fa-shopping-cart"></i>
-            <span class="badge bg-danger rounded-pill ms-1">0</span>
+            <span class="badge bg-danger rounded-pill ms-1">{{ cartItemCount }}</span>
           </a>
         </li>
         <li class="nav-item">

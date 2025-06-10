@@ -1,0 +1,315 @@
+<!-- Cart Header -->
+<div class="cart-header">
+  <div class="container">
+    <div class="header-nav">
+      <button (click)="goBack()" class="back-btn">
+        <i class="fas fa-arrow-left"></i>
+        <span>Continue Shopping</span>
+      </button>
+      
+      <div class="cart-title">
+        <h1>
+          <i class="fas fa-shopping-cart"></i>
+          Your Cart
+        </h1>
+        <p *ngIf="!isEmpty()">{{ getTotalItems() }} items in your cart</p>
+      </div>
+      
+      <div class="cart-actions">
+        <button routerLink="/auth/convert" class="header-action-btn">
+          <i class="fas fa-robot"></i>
+          <span>AI Assistant</span>
+        </button>
+        
+        <button *ngIf="!isEmpty()" (click)="clearCart()" class="header-action-btn clear-btn">
+          <i class="fas fa-trash"></i>
+          <span>Clear Cart</span>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Main Cart Content -->
+<div class="cart-content">
+  <div class="container">
+    
+    <!-- Empty Cart State -->
+    <div *ngIf="isEmpty()" class="empty-cart">
+      <div class="empty-cart-content">
+        <i class="fas fa-shopping-cart"></i>
+        <h2>Your cart is empty</h2>
+        <p>Start shopping and add items to your cart</p>
+        <button (click)="continueShopping()" class="btn btn-primary">
+          <i class="fas fa-search"></i>
+          Explore Products
+        </button>
+      </div>
+      
+      <!-- Recommended Products -->
+      <div class="recommended-section">
+        <h3>Recommended for You</h3>
+        <div class="recommended-grid">
+          <div *ngFor="let product of getRecommendedProducts()" class="recommended-item">
+            <img [src]="product.imageUrl" [alt]="product.name">
+            <h4>{{ product.name }}</h4>
+            <p>{{ product.description }}</p>
+            <div class="recommended-footer">
+              <span class="price">{{ formatCurrency(product.price) }}</span>
+              <button (click)="addRecommendedToCart(product)" class="btn btn-sm btn-primary">
+                <i class="fas fa-plus"></i>
+                Add
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Cart with Items -->
+    <div *ngIf="!isEmpty()" class="cart-layout">
+      
+      <!-- Cart Items Section -->
+      <div class="cart-items-section">
+        
+        <!-- Pharmacy Groups -->
+        <div *ngFor="let group of pharmacyGroups" class="pharmacy-group">
+          
+          <!-- Pharmacy Header -->
+          <div class="pharmacy-header">
+            <div class="pharmacy-info">
+              <div class="pharmacy-icon">
+                <i class="fas fa-store"></i>
+              </div>
+              <div class="pharmacy-details">
+                <h3>{{ group.pharmacyName }}</h3>
+                <p>{{ group.items.length }} items • Subtotal: {{ formatCurrency(group.subtotal) }}</p>
+                <span class="delivery-info">
+                  <i class="fas fa-truck"></i>
+                  {{ group.estimatedDelivery }}
+                </span>
+              </div>
+            </div>
+            
+            <div class="pharmacy-actions">
+              <button (click)="callPharmacy(group.pharmacyId)" class="pharmacy-action-btn">
+                <i class="fas fa-phone"></i>
+                Call
+              </button>
+              <button (click)="getDirectionsToPharmacy(group.pharmacyId)" class="pharmacy-action-btn">
+                <i class="fas fa-directions"></i>
+                Directions
+              </button>
+              <button (click)="viewPharmacyProducts(group.pharmacyId, group.pharmacyName)" class="pharmacy-action-btn">
+                <i class="fas fa-eye"></i>
+                View Products
+              </button>
+            </div>
+          </div>
+
+          <!-- Items in this Pharmacy -->
+          <div class="pharmacy-items">
+            <div *ngFor="let item of group.items" class="cart-item">
+              
+              <!-- Item Image -->
+              <div class="item-image">
+                <img [src]="item.imageUrl" [alt]="item.name">
+              </div>
+
+              <!-- Item Details -->
+              <div class="item-details">
+                <h4 class="item-name">{{ item.name }}</h4>
+                <p class="item-price">{{ formatCurrency(item.price) }} each</p>
+                <div class="item-meta">
+                  <span class="pharmacy-name">
+                    <i class="fas fa-store"></i>
+                    {{ item.pharmacyName || 'RxClose Direct' }}
+                  </span>
+                </div>
+              </div>
+
+              <!-- Quantity Controls -->
+              <div class="quantity-section">
+                <label>Quantity:</label>
+                <div class="quantity-controls">
+                  <button (click)="decreaseQuantity(item)" [disabled]="item.quantity <= 1" class="quantity-btn">
+                    <i class="fas fa-minus"></i>
+                  </button>
+                  <span class="quantity-display">{{ item.quantity }}</span>
+                  <button (click)="increaseQuantity(item)" class="quantity-btn">
+                    <i class="fas fa-plus"></i>
+                  </button>
+                </div>
+              </div>
+
+              <!-- Item Total and Actions -->
+              <div class="item-actions">
+                <div class="item-total">
+                  <span class="total-price">{{ formatCurrency(item.price * item.quantity) }}</span>
+                </div>
+                <button (click)="removeItem(item.id)" class="remove-btn">
+                  <i class="fas fa-trash"></i>
+                  Remove
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Cart Summary Section -->
+      <div class="cart-summary-section">
+        <div class="summary-card">
+          
+          <!-- Order Summary -->
+          <div class="summary-header">
+            <h3>
+              <i class="fas fa-receipt"></i>
+              Order Summary
+            </h3>
+          </div>
+
+          <div class="summary-body">
+            
+            <!-- Shipping Options -->
+            <div class="shipping-section">
+              <div class="section-header" (click)="toggleShippingOptions()">
+                <h4>
+                  <i class="fas fa-truck"></i>
+                  Delivery Options
+                </h4>
+                <i class="fas fa-chevron-down" [class.rotated]="showShippingOptions"></i>
+              </div>
+              
+              <div class="shipping-options" [class.show]="showShippingOptions">
+                <div *ngFor="let option of shippingOptions" 
+                     (click)="selectShippingOption(option.id)"
+                     [class.selected]="selectedShippingOption === option.id"
+                     class="shipping-option">
+                  <div class="option-info">
+                    <div class="option-header">
+                      <span class="option-name">{{ option.name }}</span>
+                      <span class="option-price">{{ formatCurrency(option.price) }}</span>
+                    </div>
+                    <p class="option-description">{{ option.description }}</p>
+                    <span class="option-time">{{ option.estimatedTime }}</span>
+                  </div>
+                  <div class="option-selector">
+                    <i class="fas fa-check"></i>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Promo Code Section -->
+            <div class="promo-section">
+              <div class="section-header" (click)="togglePromoInput()">
+                <h4>
+                  <i class="fas fa-tag"></i>
+                  Promo Code
+                </h4>
+                <i class="fas fa-chevron-down" [class.rotated]="showPromoInput"></i>
+              </div>
+              
+              <!-- Applied Promo Code -->
+              <div *ngIf="appliedPromoCode" class="applied-promo">
+                <div class="promo-info">
+                  <span class="promo-code">{{ appliedPromoCode.code }}</span>
+                  <span class="promo-description">{{ appliedPromoCode.description }}</span>
+                </div>
+                <button (click)="removePromoCode()" class="remove-promo-btn">
+                  <i class="fas fa-times"></i>
+                </button>
+              </div>
+              
+              <!-- Promo Code Input -->
+              <div *ngIf="showPromoInput && !appliedPromoCode" class="promo-input">
+                <div class="input-group">
+                  <input 
+                    type="text" 
+                    [(ngModel)]="promoCode" 
+                    placeholder="Enter promo code"
+                    class="promo-input-field">
+                  <button (click)="applyPromoCode()" class="apply-btn">Apply</button>
+                </div>
+                <div *ngIf="promoError" class="promo-error">{{ promoError }}</div>
+                
+                <!-- Available Promo Codes -->
+                <div class="available-promos">
+                  <p>Available codes:</p>
+                  <div class="promo-suggestions">
+                    <button *ngFor="let promo of availablePromoCodes" 
+                            (click)="promoCode = promo.code; applyPromoCode()"
+                            class="promo-suggestion">
+                      <span class="suggestion-code">{{ promo.code }}</span>
+                      <span class="suggestion-description">{{ promo.description }}</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Order Totals -->
+            <div class="order-totals">
+              <div class="total-line">
+                <span>Subtotal ({{ cartSummary.totalItems }} items)</span>
+                <span>{{ formatCurrency(cartSummary.subtotal) }}</span>
+              </div>
+              
+              <div class="total-line">
+                <span>Tax (14%)</span>
+                <span>{{ formatCurrency(cartSummary.tax) }}</span>
+              </div>
+              
+              <div class="total-line">
+                <span>Shipping</span>
+                <span>{{ formatCurrency(cartSummary.shipping) }}</span>
+              </div>
+              
+              <div *ngIf="appliedPromoCode" class="total-line discount-line">
+                <span>Discount ({{ appliedPromoCode.code }})</span>
+                <span>-{{ formatCurrency(getPromoDiscount()) }}</span>
+              </div>
+              
+              <div class="total-line grand-total">
+                <span>Total</span>
+                <span>{{ formatCurrency(cartSummary.totalPrice) }}</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Checkout Actions -->
+          <div class="summary-footer">
+            <button 
+              (click)="proceedToCheckout()" 
+              [disabled]="isCheckingOut || isEmpty()"
+              class="checkout-btn">
+              <span *ngIf="!isCheckingOut">
+                <i class="fas fa-credit-card"></i>
+                Proceed to Checkout
+              </span>
+              <span *ngIf="isCheckingOut">
+                <i class="fas fa-spinner fa-spin"></i>
+                Processing...
+              </span>
+            </button>
+            
+            <div class="security-badges">
+              <div class="security-badge">
+                <i class="fas fa-shield-alt"></i>
+                <span>Secure Checkout</span>
+              </div>
+              <div class="security-badge">
+                <i class="fas fa-lock"></i>
+                <span>SSL Encrypted</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Chat Widget -->
+<app-chat-widget></app-chat-widget> 

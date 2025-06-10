@@ -8,13 +8,9 @@ import { RegisterComponent } from './components/register/register.component';
 import { HomeComponent } from './components/home/home.component';
 import { SearchComponent } from './features/search/search.component';
 import { ContactpageComponent } from './features/contactuspage/contactpage/contactpage.component';
-import { CartListComponent } from './features/cart/components/cart-list/cart-list.component';
-import { CaregorylistComponent } from './features/category/caregorylist/caregorylist.component';
-import { DrugsComponent } from './features/categorypage/drugs/drugs.component';
-import { MedicalSuppliesComponent } from './features/categorypage/medical-supplies/medical-supplies.component';
-import { FitnessNutritionComponent } from './features/categorypage/fitness-nutrition/fitness-nutrition.component';
-import { OrganicHerbalComponent } from './features/categorypage/organic-herbal/organic-herbal.component';
-import { HomeCareComponent } from './features/categorypage/home-care/home-care.component';
+import { CartpageComponent } from './features/cartpage/cartpage.component';
+
+
 import { ProductDetailsComponent } from './features/product-details/product-details.component';
 import { ConvertAiComponent } from './features/ai/convert-ai/convert-ai.component';
 import { CheckoutComponent } from './checkout/checkout.component';
@@ -24,6 +20,7 @@ import { NotfoundComponent } from './components/notfound/notfound.component';
 import { ForgotPasswordComponent } from './components/forgot-password/forgot-password.component';
 import { AdminDashboardComponent } from './features/admin/admin-dashboard/admin-dashboard.component';
 import { UsersComponent } from './features/admin/users/users.component';
+import { TestCartComponent } from './test-cart.component';
 
 export const routes: Routes = [
   {
@@ -45,22 +42,13 @@ export const routes: Routes = [
           { path: 'home', component: HomeComponent },
           { path: 'search', component: SearchComponent },
           { path: 'contact', component: ContactpageComponent },
-          { path: 'cart', component: CartListComponent },
-          {
-            path: 'category',
-            children: [
-              { path: '', component: CaregorylistComponent },
-              { path: 'drugs', component: DrugsComponent },
-              { path: 'medical-supplies', component: MedicalSuppliesComponent },
-              { path: 'fitness-nutrition', component: FitnessNutritionComponent },
-              { path: 'organic-herbal', component: OrganicHerbalComponent },
-              { path: 'home-care', component: HomeCareComponent }
-            ]
-          },
+          { path: 'cart', component: CartpageComponent },
+
           { path: 'product-details', component: ProductDetailsComponent },
           { path: 'convert', component: ConvertAiComponent },
           { path: 'checkout', component: CheckoutComponent },
-          { path: 'profile', component: ProfileComponent }
+          { path: 'profile', component: ProfileComponent },
+          { path: 'test-cart', component: TestCartComponent }
         ]
       }
     ]

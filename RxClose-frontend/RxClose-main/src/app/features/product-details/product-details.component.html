@@ -1,87 +1,407 @@
-<div class="product-details-container p-4">
-  <div class="container">
-    <div class="row">
-      <!-- Product Image -->
-      <div class="col-md-4">
-        <div class="product-image">
-          <img src="assets/images/img7.jpeg" class="img-fluid" alt="Product Image">
-          <button class="share-btn">
-            <i class="fas fa-share-alt"></i>
-          </button>
-        </div>
-      </div>
+<!-- Loading State -->
+<div *ngIf="loading" class="loading-container">
+  <div class="loading-content">
+    <i class="fas fa-spinner fa-spin"></i>
+    <p>Loading product details...</p>
+  </div>
+</div>
 
-      <!-- Product Information -->
-      <div class="col-md-8">
-        <h2 class="product-title">{{product.name}}</h2>
-        <p class="description">{{product.description}}</p>
+<!-- Product Details Content -->
+<div *ngIf="!loading && product" class="product-details-container">
+  
+  <!-- Navigation Header -->
+  <div class="navigation-header">
+    <div class="container">
+      <button (click)="goBack()" class="back-btn">
+        <i class="fas fa-arrow-left"></i>
+        <span>Back to Search</span>
+      </button>
+      
+      <div class="nav-actions">
+        <button routerLink="/auth/convert" class="nav-action-btn">
+          <i class="fas fa-robot"></i>
+          <span>AI Assistant</span>
+        </button>
         
-        <div class="status-info">
-          <span class="stock-status" *ngIf="product.inStock">In stock</span>
-          <span class="product-code">RXClos Code: {{product.code}}</span>
-        </div>
+        <button routerLink="/auth/cart" class="nav-action-btn cart-btn">
+          <i class="fas fa-shopping-cart"></i>
+          <span class="cart-badge" *ngIf="cartItemCount > 0">{{ cartItemCount }}</span>
+          <span>Cart</span>
+        </button>
+      </div>
+    </div>
+  </div>
 
-        <div class="price mt-3">
-          <h3>EGP {{product.price}}</h3>
-        </div>
+  <!-- Main Product Section -->
+  <div class="product-main-section">
+    <div class="container">
+      <div class="product-layout">
+        
+        <!-- Product Images Gallery -->
+        <div class="product-gallery">
+          <div class="main-image-container">
+            <img [src]="productImages[currentImageIndex]" [alt]="product.name" class="main-image">
+            
+            <!-- Image Navigation -->
+            <button *ngIf="productImages.length > 1" (click)="previousImage()" class="image-nav-btn prev-btn">
+              <i class="fas fa-chevron-left"></i>
+            </button>
+            <button *ngIf="productImages.length > 1" (click)="nextImage()" class="image-nav-btn next-btn">
+              <i class="fas fa-chevron-right"></i>
+            </button>
+            
+            <!-- Product Badges -->
+            <div class="product-badges">
+              <span *ngIf="product.prescription" class="badge prescription-badge">
+                <i class="fas fa-prescription-bottle"></i>
+                Prescription Required
+              </span>
+              <span *ngIf="product.stock < 10" class="badge low-stock-badge">
+                <i class="fas fa-exclamation-triangle"></i>
+                Low Stock
+              </span>
+              <span class="badge seller-badge" [class]="product.sellerType + '-badge'">
+                <i class="fas fa-store"></i>
+                {{ product.sellerType === 'rxclose' ? 'RxClose Direct' : 'Local Pharmacy' }}
+              </span>
+            </div>
 
-        <div class="quantity-selector mt-4">
-          <label>Quantity:</label>
-          <div class="d-flex align-items-center gap-2">
-            <button class="btn btn-outline-secondary" (click)="decreaseQuantity()">-</button>
-            <span class="quantity">{{product.quantity}}</span>
-            <button class="btn btn-outline-secondary" (click)="increaseQuantity()">+</button>
+            <!-- Wishlist Button -->
+            <button (click)="toggleWishlist()" class="wishlist-btn" [class.active]="isInWishlist">
+              <i [class]="isInWishlist ? 'fas fa-heart' : 'far fa-heart'"></i>
+            </button>
+          </div>
+          
+          <!-- Thumbnail Images -->
+          <div *ngIf="productImages.length > 1" class="thumbnail-gallery">
+            <button 
+              *ngFor="let image of productImages; let i = index" 
+              (click)="selectImage(i)"
+              [class.active]="i === currentImageIndex"
+              class="thumbnail-btn">
+              <img [src]="image" [alt]="'Product image ' + (i + 1)">
+            </button>
           </div>
         </div>
 
-        <div class="actions mt-4">
-          <button class="btn btn-primary me-3">Add to Cart +</button>
-          <button class="btn btn-secondary">BUY NOW</button>
-        </div>
+        <!-- Product Information -->
+        <div class="product-info">
+          
+          <!-- Product Header -->
+          <div class="product-header">
+            <h1 class="product-title">{{ product.name }}</h1>
+            <div class="product-category">
+              <i class="fas fa-tag"></i>
+              <span>{{ getCategoryDisplay(product.category) }}</span>
+            </div>
+          </div>
 
-        <!-- You May Also Like Section -->
-        <div class="related-products mt-5">
-          <div class="container position-relative">
-            <h3 class="mb-4">YOU MAY ALSO LIKE</h3>
-            
-            <!-- Customer Reviews -->
-            <div class="customer-reviews mb-4 p-3 border">
-              <h4 class="text-center">Customer Reviews</h4>
-              <div class="stars text-center mb-2">
-                <i class="fas fa-star text-warning"></i>
-                <i class="fas fa-star text-warning"></i>
-                <i class="fas fa-star text-warning"></i>
-                <i class="fas fa-star text-warning"></i>
-                <i class="fas fa-star text-warning"></i>
+          <!-- Price and Stock -->
+          <div class="product-pricing">
+            <div class="price-section">
+              <span class="current-price">{{ product.price | currency:'EGP':'symbol':'1.2-2' }}</span>
+              <div class="stock-info">
+                <i class="fas fa-boxes" [class.text-success]="product.stock > 10" [class.text-warning]="product.stock <= 10"></i>
+                <span [class.text-success]="product.stock > 10" [class.text-warning]="product.stock <= 10">
+                  {{ product.stock }} units in stock
+                </span>
               </div>
-              <p class="text-center mb-0">Be the first to write a review</p>
+            </div>
+          </div>
+
+          <!-- Description -->
+          <div class="product-description">
+            <h3>Description</h3>
+            <p [class.expanded]="showFullDescription">{{ product.description }}</p>
+            <button *ngIf="product.description.length > 150" (click)="toggleDescription()" class="read-more-btn">
+              {{ showFullDescription ? 'Read Less' : 'Read More' }}
+            </button>
+          </div>
+
+          <!-- Quantity and Actions -->
+          <div class="product-actions">
+            <div class="quantity-section">
+              <label>Quantity:</label>
+              <div class="quantity-controls">
+                <button (click)="decreaseQuantity()" [disabled]="selectedQuantity <= 1" class="quantity-btn">
+                  <i class="fas fa-minus"></i>
+                </button>
+                <input type="number" [(ngModel)]="selectedQuantity" [max]="product.stock" min="1" class="quantity-input">
+                <button (click)="increaseQuantity()" [disabled]="selectedQuantity >= product.stock" class="quantity-btn">
+                  <i class="fas fa-plus"></i>
+                </button>
+              </div>
             </div>
 
-            <!-- Related Products with Navigation Arrows -->
-            <button class="nav-arrow prev" (click)="scrollLeft()" (mouseenter)="stopAutoScroll()" (mouseleave)="startAutoScroll()">
-              <i class="fas fa-chevron-left"></i>
-            </button>
-            
-            <button class="nav-arrow next" (click)="scrollRight()" (mouseenter)="stopAutoScroll()" (mouseleave)="startAutoScroll()">
-              <i class="fas fa-chevron-right"></i>
-            </button>
+            <div class="action-buttons">
+              <button (click)="addToCart()" [disabled]="product.stock === 0" class="btn btn-primary add-to-cart-btn">
+                <i class="fas fa-cart-plus"></i>
+                <span>Add to Cart</span>
+              </button>
+              <button (click)="buyNow()" [disabled]="product.stock === 0" class="btn btn-secondary buy-now-btn">
+                <i class="fas fa-bolt"></i>
+                <span>Buy Now</span>
+              </button>
+            </div>
+          </div>
 
-            <div class="row">
-              <div class="col-12">
-                <div class="related-products-slider d-flex gap-3 overflow-hidden">
-                  @for (product of relatedProducts; track $index) {
-                    <div class="product-card" style="min-width: 200px;" 
-                         (mouseenter)="stopAutoScroll()" 
-                         (mouseleave)="startAutoScroll()">
-                      <div class="image-container rounded-circle overflow-hidden mb-3" style="width: 150px; height: 150px; margin: auto;">
-                        <img [src]="product.image" [alt]="product.name" class="img-fluid">
+          <!-- Pharmacy Information -->
+          <div *ngIf="pharmacy" class="pharmacy-info-card">
+            <h3>
+              <i class="fas fa-store"></i>
+              Available at {{ pharmacy.name }}
+            </h3>
+            
+            <div class="pharmacy-details">
+              <div class="pharmacy-item">
+                <i class="fas fa-map-marker-alt"></i>
+                <span>{{ pharmacy.address }}</span>
+                <span *ngIf="pharmacy.distance" class="distance-badge">{{ pharmacy.distance }}km away</span>
+              </div>
+              
+              <div class="pharmacy-item">
+                <i class="fas fa-phone"></i>
+                <span>{{ pharmacy.phone }}</span>
+              </div>
+              
+              <div class="pharmacy-item" *ngIf="pharmacy.openingHours">
+                <i class="fas fa-clock"></i>
+                <span>{{ pharmacy.openingHours }}</span>
+              </div>
+              
+              <div class="pharmacy-item" *ngIf="pharmacy.rating">
+                <i class="fas fa-star"></i>
+                <span>{{ pharmacy.rating }}/5 Rating</span>
+              </div>
+            </div>
+
+            <div class="pharmacy-actions">
+              <button (click)="callPharmacy()" class="pharmacy-btn call-btn">
+                <i class="fas fa-phone"></i>
+                Call Pharmacy
+              </button>
+              <button (click)="getDirections()" class="pharmacy-btn directions-btn">
+                <i class="fas fa-directions"></i>
+                Get Directions
+              </button>
+              <button (click)="viewPharmacyProducts()" class="pharmacy-btn view-products-btn">
+                <i class="fas fa-pills"></i>
+                View All Products
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Product Details Tabs -->
+  <div class="product-details-tabs">
+    <div class="container">
+      
+      <!-- Tab Navigation -->
+      <div class="tab-navigation">
+        <button 
+          (click)="switchTab('details')" 
+          [class.active]="activeTab === 'details'"
+          class="tab-btn">
+          <i class="fas fa-info-circle"></i>
+          Product Details
+        </button>
+        <button 
+          (click)="switchTab('reviews')" 
+          [class.active]="activeTab === 'reviews'"
+          class="tab-btn">
+          <i class="fas fa-star"></i>
+          Reviews ({{ reviews.length }})
+        </button>
+        <button 
+          (click)="switchTab('safety')" 
+          [class.active]="activeTab === 'safety'"
+          class="tab-btn">
+          <i class="fas fa-shield-alt"></i>
+          Safety Information
+        </button>
+      </div>
+
+      <!-- Tab Content -->
+      <div class="tab-content">
+        
+        <!-- Product Details Tab -->
+        <div *ngIf="activeTab === 'details'" class="tab-panel details-panel">
+          <div class="details-grid">
+            <div class="detail-section" *ngIf="product.details?.activeIngredient">
+              <h4><i class="fas fa-flask"></i> Active Ingredient</h4>
+              <p>{{ product.details?.activeIngredient }}</p>
+            </div>
+            
+            <div class="detail-section" *ngIf="product.details?.manufacturer">
+              <h4><i class="fas fa-industry"></i> Manufacturer</h4>
+              <p>{{ product.details?.manufacturer }}</p>
+            </div>
+            
+            <div class="detail-section" *ngIf="product.details?.expiryDate">
+              <h4><i class="fas fa-calendar-alt"></i> Expiry Date</h4>
+              <p>{{ product.details?.expiryDate }}</p>
+            </div>
+            
+            <div class="detail-section" *ngIf="product.details?.dosage">
+              <h4><i class="fas fa-pills"></i> Dosage & Administration</h4>
+              <p>{{ product.details?.dosage }}</p>
+            </div>
+            
+            <div class="detail-section" *ngIf="product.details?.directions">
+              <h4><i class="fas fa-list-ol"></i> Directions for Use</h4>
+              <p>{{ product.details?.directions }}</p>
+            </div>
+            
+            <div class="detail-section" *ngIf="product.details?.storage">
+              <h4><i class="fas fa-warehouse"></i> Storage Instructions</h4>
+              <p>{{ product.details?.storage }}</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Reviews Tab -->
+        <div *ngIf="activeTab === 'reviews'" class="tab-panel reviews-panel">
+          <div class="reviews-summary">
+            <h3>Customer Reviews</h3>
+            <div class="reviews-stats">
+              <div class="average-rating">
+                <span class="rating-number">4.6</span>
+                <div class="stars">
+                  <i *ngFor="let star of getStarArray(5)" class="fas fa-star"></i>
+                </div>
+                <span class="total-reviews">({{ reviews.length }} reviews)</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="reviews-list">
+            <div *ngFor="let review of reviews" class="review-item">
+              <div class="review-header">
+                <div class="reviewer-info">
+                  <div class="reviewer-avatar">
+                    <i class="fas fa-user"></i>
+                  </div>
+                  <div class="reviewer-details">
+                    <h5>{{ review.userName }}</h5>
+                    <div class="review-meta">
+                      <div class="review-rating">
+                        <i *ngFor="let star of getStarArray(review.rating)" 
+                           [class]="star ? 'fas fa-star' : 'far fa-star'"></i>
                       </div>
-                      <h5 class="text-center">{{product.name}}</h5>
-                      <p class="text-center text-muted small">{{product.description}}</p>
+                      <span class="review-date">{{ formatDate(review.date) }}</span>
+                      <span *ngIf="review.verified" class="verified-badge">
+                        <i class="fas fa-check-circle"></i>
+                        Verified Purchase
+                      </span>
                     </div>
-                  }
+                  </div>
+                </div>
+              </div>
+              <div class="review-content">
+                <p>{{ review.comment }}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Safety Information Tab -->
+        <div *ngIf="activeTab === 'safety'" class="tab-panel safety-panel">
+          <div class="safety-grid">
+            <div class="safety-section" *ngIf="product.details?.sideEffects?.length">
+              <h4><i class="fas fa-exclamation-triangle"></i> Possible Side Effects</h4>
+              <ul>
+                <li *ngFor="let effect of product.details?.sideEffects">{{ effect }}</li>
+              </ul>
+            </div>
+            
+            <div class="safety-section" *ngIf="product.details?.contraindications?.length">
+              <h4><i class="fas fa-ban"></i> Contraindications</h4>
+              <ul>
+                <li *ngFor="let contraindication of product.details?.contraindications">{{ contraindication }}</li>
+              </ul>
+            </div>
+            
+            <div class="safety-section">
+              <h4><i class="fas fa-info-circle"></i> Important Safety Information</h4>
+              <div class="safety-warnings">
+                <div class="warning-item">
+                  <i class="fas fa-user-md"></i>
+                  <span>Always consult your healthcare provider before taking any medication</span>
+                </div>
+                <div class="warning-item">
+                  <i class="fas fa-child"></i>
+                  <span>Keep out of reach of children</span>
+                </div>
+                <div class="warning-item">
+                  <i class="fas fa-thermometer-half"></i>
+                  <span>Store according to package instructions</span>
+                </div>
+                <div class="warning-item">
+                  <i class="fas fa-clock"></i>
+                  <span>Do not use after expiry date</span>
                 </div>
               </div>
             </div>
           </div>
         </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Related Products Section -->
+  <div *ngIf="relatedProducts.length > 0" class="related-products-section">
+    <div class="container">
+      <div class="section-header">
+        <h2>
+          <i class="fas fa-pills"></i>
+          Related Products
+        </h2>
+        <p>You might also be interested in these products</p>
+      </div>
+
+      <div class="related-products-container">
+        <button (click)="scrollLeft()" class="scroll-btn scroll-left">
+          <i class="fas fa-chevron-left"></i>
+        </button>
+
+        <div class="related-products-slider">
+          <div *ngFor="let product of relatedProducts" class="related-product-card">
+            <div class="product-image" (click)="viewProduct(product)">
+              <img [src]="product.imageUrl" [alt]="product.name">
+              
+              <div class="product-overlay">
+                <button (click)="viewProduct(product); $event.stopPropagation()" class="overlay-btn view-btn">
+                  <i class="fas fa-eye"></i>
+                </button>
+                <button (click)="addRelatedToCart(product); $event.stopPropagation()" class="overlay-btn cart-btn">
+                  <i class="fas fa-cart-plus"></i>
+                </button>
+              </div>
+            </div>
+
+            <div class="product-info">
+              <h4 (click)="viewProduct(product)">{{ product.name }}</h4>
+              <p>{{ product.description }}</p>
+              <div class="product-footer">
+                <span class="price">{{ product.price | currency:'EGP':'symbol':'1.2-2' }}</span>
+                <button (click)="addRelatedToCart(product)" class="quick-add-btn">
+                  <i class="fas fa-plus"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <button (click)="scrollRight()" class="scroll-btn scroll-right">
+          <i class="fas fa-chevron-right"></i>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Chat Widget -->
+<app-chat-widget></app-chat-widget>
