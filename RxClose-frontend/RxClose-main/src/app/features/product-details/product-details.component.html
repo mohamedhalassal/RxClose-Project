@@ -1,13 +1,33 @@
+<app-navbar></app-navbar>
 <!-- Loading State -->
 <div *ngIf="loading" class="loading-container">
   <div class="loading-content">
     <i class="fas fa-spinner fa-spin"></i>
-    <p>Loading product details...</p>
+    <p>تحميل تفاصيل المنتج...</p>
+  </div>
+</div>
+
+<!-- Error State -->
+<div *ngIf="!loading && error" class="error-container">
+  <div class="error-content">
+    <i class="fas fa-exclamation-triangle"></i>
+    <h2>المنتج غير موجود</h2>
+    <p>عذراً، لم نتمكن من العثور على هذا المنتج. قد يكون قد تم حذفه أو أن الرابط غير صحيح.</p>
+    <div class="error-actions">
+      <button (click)="goBack()" class="btn btn-primary">
+        <i class="fas fa-arrow-left"></i>
+        العودة للبحث
+      </button>
+      <a routerLink="/auth/home" class="btn btn-secondary">
+        <i class="fas fa-home"></i>
+        الصفحة الرئيسية
+      </a>
+    </div>
   </div>
 </div>
 
 <!-- Product Details Content -->
-<div *ngIf="!loading && product" class="product-details-container">
+<div *ngIf="!loading && !error && product" class="product-details-container">
   
   <!-- Navigation Header -->
   <div class="navigation-header">
@@ -121,26 +141,48 @@
           <!-- Quantity and Actions -->
           <div class="product-actions">
             <div class="quantity-section">
-              <label>Quantity:</label>
+              <label>الكمية:</label>
               <div class="quantity-controls">
-                <button (click)="decreaseQuantity()" [disabled]="selectedQuantity <= 1" class="quantity-btn">
+                <button (click)="decreaseQuantity()" 
+                        [disabled]="selectedQuantity <= 1" 
+                        class="quantity-btn"
+                        [class.disabled]="selectedQuantity <= 1"
+                        title="تقليل الكمية">
                   <i class="fas fa-minus"></i>
                 </button>
-                <input type="number" [(ngModel)]="selectedQuantity" [max]="product.stock" min="1" class="quantity-input">
-                <button (click)="increaseQuantity()" [disabled]="selectedQuantity >= product.stock" class="quantity-btn">
+                <input type="number" 
+                       [(ngModel)]="selectedQuantity" 
+                       [max]="product.stock" 
+                       min="1" 
+                       class="quantity-input"
+                       title="الكمية المطلوبة">
+                <button (click)="increaseQuantity()" 
+                        [disabled]="selectedQuantity >= product.stock" 
+                        class="quantity-btn"
+                        [class.disabled]="selectedQuantity >= product.stock"
+                        title="زيادة الكمية">
                   <i class="fas fa-plus"></i>
                 </button>
               </div>
+              <small class="stock-hint">متوفر: {{ product.stock }} قطعة</small>
             </div>
 
             <div class="action-buttons">
-              <button (click)="addToCart()" [disabled]="product.stock === 0" class="btn btn-primary add-to-cart-btn">
+              <button (click)="addToCart()" 
+                      [disabled]="product.stock === 0" 
+                      class="btn btn-primary add-to-cart-btn"
+                      [class.disabled]="product.stock === 0"
+                      title="إضافة إلى السلة">
                 <i class="fas fa-cart-plus"></i>
-                <span>Add to Cart</span>
+                <span>{{ product.stock === 0 ? 'غير متوفر' : 'أضف للسلة' }}</span>
               </button>
-              <button (click)="buyNow()" [disabled]="product.stock === 0" class="btn btn-secondary buy-now-btn">
+              <button (click)="buyNow()" 
+                      [disabled]="product.stock === 0" 
+                      class="btn btn-secondary buy-now-btn"
+                      [class.disabled]="product.stock === 0"
+                      title="اشتري الآن">
                 <i class="fas fa-bolt"></i>
-                <span>Buy Now</span>
+                <span>{{ product.stock === 0 ? 'غير متوفر' : 'اشتري الآن' }}</span>
               </button>
             </div>
           </div>

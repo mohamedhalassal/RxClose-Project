@@ -1,11 +1,15 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { ActivatedRoute, Router } from '@angular/router';
+import { Router } from '@angular/router';
 import { AdminService } from '../../services/admin.service';
 import { CartService } from '../../services/cart.service';
 import { ChatWidgetComponent } from '../../shared/components/chat-widget/chat-widget.component';
 import { NavbarComponent } from '../../shared/components/navbar/navbar.component';
+import { ProductService } from '../../services/product.service';
+import { MapService } from '../../services/map.service';
+import { AuthService } from '../../services/auth.service';
+import { MapComponent } from '../../shared/components/map/map.component';
 
 interface Product {
   id: number;
@@ -49,765 +53,747 @@ interface SearchFilters {
 @Component({
   selector: 'app-search',
   standalone: true,
-  imports: [CommonModule, FormsModule, ChatWidgetComponent, NavbarComponent],
-  templateUrl: './search.component.html',
-  styleUrls: ['./search.component.scss']
+  imports: [CommonModule, FormsModule, ChatWidgetComponent, NavbarComponent, MapComponent],
+  template: `
+    <app-navbar></app-navbar>
+    <div class="search-container">
+      <!-- Search Header -->
+      <div class="search-header">
+        <h1>
+          <i class="fas fa-search"></i>
+          Smart Medicine Search
+        </h1>
+        <p>Find medicines near you with location-based search</p>
+      </div>
+
+      <!-- Search Form -->
+      <div class="search-form-card">
+        <div class="search-form">
+          <div class="search-input-group">
+            <div class="input-wrapper">
+              <i class="fas fa-pills"></i>
+              <input 
+                type="text" 
+                [(ngModel)]="searchQuery" 
+                placeholder="Search for medicines..."
+                class="search-input"
+                (keyup.enter)="performSearch()"
+                (input)="onSearchInput()">
+              <button 
+                *ngIf="searchQuery" 
+                (click)="clearSearch()" 
+                class="clear-btn"
+                title="Clear search">
+                <i class="fas fa-times"></i>
+              </button>
+            </div>
+            <button 
+              (click)="performSearch()" 
+              [disabled]="isSearching"
+              class="search-btn">
+              <i class="fas fa-search"></i>
+              {{ isSearching ? 'Searching...' : 'Search' }}
+            </button>
+          </div>
+
+          <!-- Search Options -->
+          <div class="search-options">
+            <div class="option-group">
+              <label class="checkbox-label">
+                <input type="checkbox" [(ngModel)]="useLocationSearch">
+                <span class="checkmark"></span>
+                Use location-based search
+              </label>
+            </div>
+
+            <div class="option-group" *ngIf="useLocationSearch">
+              <label for="maxDistance">Search radius:</label>
+              <select [(ngModel)]="maxDistance" id="maxDistance" class="distance-select">
+                <option value="5">5 km</option>
+                <option value="10">10 km</option>
+                <option value="25">25 km</option>
+                <option value="50">50 km</option>
+                <option value="100">100 km</option>
+              </select>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- User Location Section -->
+      <div class="location-section" *ngIf="useLocationSearch">
+        <h3>
+          <i class="fas fa-map-marker-alt"></i>
+          Your Location
+        </h3>
+        <p *ngIf="!userLocation">Please set your location to enable location-based search</p>
+        
+        <div class="location-info" *ngIf="userLocation">
+          <p>
+            <strong>Current Location:</strong> 
+            {{ userLocation.latitude | number:'1.6-6' }}, {{ userLocation.longitude | number:'1.6-6' }}
+          </p>
+          <button (click)="getCurrentLocation()" class="btn secondary">
+            <i class="fas fa-crosshairs"></i>
+            Update Location
+          </button>
+        </div>
+
+        <app-map
+          title="Set Your Location for Search"
+          subtitle="Click on the map to set your current location"
+          [initialLatitude]="userLocation?.latitude"
+          [initialLongitude]="userLocation?.longitude"
+          (locationSelected)="onLocationSelected($event)"
+          [height]="'300px'">
+        </app-map>
+      </div>
+
+      <!-- Search Results -->
+      <div class="results-section" *ngIf="searchResults.length > 0 || hasSearched || isInitialLoad">
+        <div class="results-header">
+          <h3>
+            <i class="fas fa-list"></i>
+            <span *ngIf="!hasSearched && !isInitialLoad">All Medicines</span>
+            <span *ngIf="hasSearched">Search Results</span>
+            <span *ngIf="isInitialLoad">Loading Medicines...</span>
+            <span class="results-count" *ngIf="searchResults.length > 0 && !isInitialLoad">
+              ({{ searchResults.length }} found)
+            </span>
+          </h3>
+          <div class="search-info" *ngIf="useLocationSearch && userLocation && hasSearched">
+            <i class="fas fa-location-arrow"></i>
+            Showing results within {{ maxDistance }}km
+          </div>
+          <div class="search-info" *ngIf="!hasSearched && !isInitialLoad">
+            <i class="fas fa-pills"></i>
+            Browse all available medicines or use search to find specific products
+          </div>
+        </div>
+
+        <!-- Loading State -->
+        <div class="loading-state" *ngIf="isSearching">
+          <div class="loading-icon">
+            <i class="fas fa-spinner fa-spin"></i>
+          </div>
+          <h4>Searching medicines...</h4>
+          <p *ngIf="useLocationSearch">Finding nearest pharmacies with your requested medicine</p>
+          <p *ngIf="!useLocationSearch">Searching through all available medicines</p>
+        </div>
+
+        <div class="no-results" *ngIf="hasSearched && searchResults.length === 0 && !isSearching">
+          <div class="no-results-icon">
+            <i class="fas fa-search-minus"></i>
+          </div>
+          <h4>No medicines found</h4>
+          <p *ngIf="useLocationSearch">Try adjusting your search terms or increasing the search radius.</p>
+          <p *ngIf="!useLocationSearch">Try adjusting your search terms or check the spelling.</p>
+        </div>
+
+        <div class="results-grid" *ngIf="searchResults.length > 0">
+          <div class="result-card" *ngFor="let result of searchResults">
+            <div class="result-header">
+              <h4>{{ result.name }}</h4>
+              <div class="price">{{ result.price | currency:'EGP':'symbol':'1.2-2' }}</div>
+            </div>
+            
+            <div class="result-info">
+              <p class="description">{{ result.description }}</p>
+              <div class="result-details">
+                <span class="category">
+                  <i class="fas fa-tag"></i>
+                  {{ result.category }}
+                </span>
+                <span class="stock" [class.low-stock]="result.stock < 10">
+                  <i class="fas fa-boxes"></i>
+                  {{ result.stock }} in stock
+                </span>
+                <span class="prescription" *ngIf="result.prescription">
+                  <i class="fas fa-prescription"></i>
+                  Prescription Required
+                </span>
+              </div>
+            </div>
+
+            <div class="pharmacy-info">
+              <div class="pharmacy-details">
+                <h5>
+                  <i class="fas fa-store"></i>
+                  {{ result.pharmacyName || result.sellerName }}
+                </h5>
+                <p *ngIf="result.pharmacyAddress" class="address">
+                  <i class="fas fa-map-marker-alt"></i>
+                  {{ result.pharmacyAddress }}
+                </p>
+                <p *ngIf="result.pharmacyPhone" class="phone">
+                  <i class="fas fa-phone"></i>
+                  {{ result.pharmacyPhone }}
+                </p>
+              </div>
+              
+              <div class="distance-info" *ngIf="result.distance !== undefined">
+                <div class="distance-badge" [class]="getDistanceClass(result.distance)">
+                  <i class="fas fa-route"></i>
+                  {{ result.distanceText }}
+                </div>
+              </div>
+            </div>
+
+            <div class="result-actions">
+              <button class="btn primary" (click)="addToCart(result)">
+                <i class="fas fa-shopping-cart"></i>
+                Add to Cart
+              </button>
+              <button class="btn secondary" (click)="viewDetails(result)">
+                <i class="fas fa-info-circle"></i>
+                Details
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  `,
+  styles: [`
+    .search-container {
+      min-height: 100vh;
+      background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+      padding: 2rem 1rem;
+    }
+
+    .search-header {
+      text-align: center;
+      margin-bottom: 2rem;
+    }
+
+    .search-header h1 {
+      font-size: 2.5rem;
+      color: #2c3e50;
+      margin-bottom: 0.5rem;
+    }
+
+    .search-header p {
+      font-size: 1.1rem;
+      color: #7f8c8d;
+    }
+
+    .search-form-card {
+      background: white;
+      border-radius: 16px;
+      padding: 2rem;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+      margin-bottom: 2rem;
+      max-width: 800px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    .search-input-group {
+      display: flex;
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .input-wrapper {
+      flex: 1;
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+
+    .input-wrapper i {
+      position: absolute;
+      left: 1rem;
+      color: #7f8c8d;
+      z-index: 1;
+    }
+
+    .search-input {
+      width: 100%;
+      padding: 1rem 3rem 1rem 3rem;
+      border: 2px solid #e9ecef;
+      border-radius: 12px;
+      font-size: 1.1rem;
+      transition: all 0.3s ease;
+    }
+
+    .clear-btn {
+      position: absolute;
+      right: 1rem;
+      top: 50%;
+      transform: translateY(-50%);
+      background: none;
+      border: none;
+      color: #6c757d;
+      cursor: pointer;
+      padding: 0.25rem;
+      border-radius: 50%;
+      transition: all 0.3s ease;
+      z-index: 2;
+    }
+
+    .clear-btn:hover {
+      background: #f8f9fa;
+      color: #dc3545;
+    }
+
+    .search-input:focus {
+      outline: none;
+      border-color: #667eea;
+      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+
+    .search-btn {
+      padding: 1rem 2rem;
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      color: white;
+      border: none;
+      border-radius: 12px;
+      font-size: 1.1rem;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      white-space: nowrap;
+    }
+
+    .search-btn:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+    }
+
+    .search-btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    .search-options {
+      display: flex;
+      gap: 2rem;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .option-group {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .checkbox-label {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      cursor: pointer;
+      font-weight: 500;
+    }
+
+    .distance-select {
+      padding: 0.5rem 1rem;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      font-size: 0.9rem;
+    }
+
+    .location-section {
+      background: white;
+      border-radius: 16px;
+      padding: 2rem;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+      margin-bottom: 2rem;
+      max-width: 800px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    .location-section h3 {
+      color: #2c3e50;
+      margin-bottom: 1rem;
+    }
+
+    .location-info {
+      background: #f8f9fa;
+      padding: 1rem;
+      border-radius: 8px;
+      margin-bottom: 1rem;
+    }
+
+    .results-section {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    .results-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 2rem;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+
+    .results-header h3 {
+      color: #2c3e50;
+      font-size: 1.5rem;
+    }
+
+    .results-count {
+      color: #667eea;
+      font-weight: normal;
+    }
+
+    .search-info {
+      color: #7f8c8d;
+      font-size: 0.9rem;
+    }
+
+    .loading-state {
+      text-align: center;
+      padding: 3rem;
+      background: white;
+      border-radius: 16px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+      color: #6c757d;
+    }
+
+    .loading-icon {
+      font-size: 3rem;
+      margin-bottom: 1rem;
+      color: #007bff;
+    }
+
+    .loading-icon i {
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    .no-results {
+      text-align: center;
+      padding: 3rem;
+      background: white;
+      border-radius: 16px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    }
+
+    .no-results-icon {
+      font-size: 3rem;
+      color: #bdc3c7;
+      margin-bottom: 1rem;
+    }
+
+    .results-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+      gap: 1.5rem;
+    }
+
+    .result-card {
+      background: white;
+      border-radius: 16px;
+      padding: 1.5rem;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+      transition: all 0.3s ease;
+    }
+
+    .result-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+    }
+
+    .result-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 1rem;
+    }
+
+    .result-header h4 {
+      color: #2c3e50;
+      margin: 0;
+      flex: 1;
+    }
+
+    .price {
+      font-size: 1.25rem;
+      font-weight: bold;
+      color: #27ae60;
+    }
+
+    .description {
+      color: #7f8c8d;
+      margin-bottom: 1rem;
+      line-height: 1.5;
+    }
+
+    .result-details {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      margin-bottom: 1rem;
+    }
+
+    .result-details span {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.25rem;
+      padding: 0.25rem 0.75rem;
+      background: #f8f9fa;
+      border-radius: 20px;
+      font-size: 0.8rem;
+      color: #495057;
+    }
+
+    .low-stock {
+      background: #fff5f5 !important;
+      color: #e53e3e !important;
+    }
+
+    .prescription {
+      background: #fef5e7 !important;
+      color: #dd6b20 !important;
+    }
+
+    .pharmacy-info {
+      border-top: 1px solid #e9ecef;
+      padding-top: 1rem;
+      margin-bottom: 1rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+    }
+
+    .pharmacy-details h5 {
+      color: #2c3e50;
+      margin: 0 0 0.5rem 0;
+    }
+
+    .pharmacy-details p {
+      margin: 0.25rem 0;
+      font-size: 0.9rem;
+      color: #7f8c8d;
+    }
+
+    .distance-badge {
+      padding: 0.5rem 1rem;
+      border-radius: 20px;
+      font-size: 0.8rem;
+      font-weight: bold;
+      text-align: center;
+    }
+
+    .distance-badge.very-close {
+      background: #d4edda;
+      color: #155724;
+    }
+
+    .distance-badge.close {
+      background: #fff3cd;
+      color: #856404;
+    }
+
+    .distance-badge.far {
+      background: #f8d7da;
+      color: #721c24;
+    }
+
+    .result-actions {
+      display: flex;
+      gap: 1rem;
+    }
+
+    .btn {
+      flex: 1;
+      padding: 0.75rem 1rem;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 500;
+      transition: all 0.3s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+    }
+
+    .btn.primary {
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      color: white;
+    }
+
+    .btn.secondary {
+      background: #e9ecef;
+      color: #495057;
+    }
+
+    .btn:hover {
+      transform: translateY(-1px);
+    }
+
+    @media (max-width: 768px) {
+      .search-container {
+        padding: 1rem;
+      }
+
+      .search-input-group {
+        flex-direction: column;
+      }
+
+      .search-options {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+
+      .results-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .result-actions {
+        flex-direction: column;
+      }
+    }
+  `]
 })
 export class SearchComponent implements OnInit {
   searchQuery: string = '';
-  searchResults: Product[] = [];
-  nearbyPharmacies: Pharmacy[] = [];
-  loading: boolean = false;
-  error: string | null = null;
-  noResults: boolean = false;
-  userLocation: { latitude: number; longitude: number } | null = null;
-  
-  // UI State
-  showFilters: boolean = false;
-  viewMode: 'grid' | 'list' = 'grid';
-  showBackToTop: boolean = false;
-  cartItemCount: number = 0;
-  
-  // Filters
-  filters: SearchFilters = {
-    category: '',
-    priceRange: { min: 0, max: 1000 },
-    sellerType: '',
-    prescriptionRequired: null,
-    availability: 'all',
-    sortBy: 'relevance',
-    maxDistance: undefined
-  };
-
-  // Quick Categories for Hero Section
-  quickCategories = [
-    { value: 'prescription', label: 'أدوية بروشتة', icon: 'fas fa-prescription' },
-    { value: 'otc', label: 'بدون روشتة', icon: 'fas fa-pills' },
-    { value: 'vitamins-supplements', label: 'فيتامينات', icon: 'fas fa-leaf' },
-    { value: 'baby-care', label: 'منتجات الأطفال', icon: 'fas fa-baby' },
-    { value: 'medical-supplies', label: 'مستلزمات طبية', icon: 'fas fa-stethoscope' }
-  ];
-
-  // Categories with display names
-  categories = [
-    { value: '', label: 'جميع الفئات' },
-    { value: 'prescription', label: 'أدوية بروشتة' },
-    { value: 'otc', label: 'أدوية بدون روشتة' },
-    { value: 'medical-supplies', label: 'مستلزمات طبية' },
-    { value: 'vitamins-supplements', label: 'فيتامينات ومكملات' },
-    { value: 'baby-care', label: 'منتجات الأطفال' },
-    { value: 'personal-care', label: 'العناية الشخصية' },
-    { value: 'beauty-cosmetics', label: 'تجميل ومكياج' },
-    { value: 'first-aid', label: 'إسعافات أولية' },
-    { value: 'medical-devices', label: 'أجهزة طبية' },
-    { value: 'herbal-natural', label: 'أعشاب طبيعية' },
-    { value: 'diabetic-care', label: 'رعاية مرضى السكري' },
-    { value: 'dental-care', label: 'العناية بالأسنان' },
-    { value: 'eye-ear-care', label: 'العناية بالعين والأذن' },
-    { value: 'respiratory-care', label: 'أمراض الجهاز التنفسي' },
-    { value: 'weight-management', label: 'إدارة الوزن' },
-    { value: 'sports-nutrition', label: 'التغذية الرياضية' },
-    { value: 'elderly-care', label: 'رعاية كبار السن' },
-    { value: 'women-health', label: 'صحة المرأة' },
-    { value: 'men-health', label: 'صحة الرجل' },
-    { value: 'sexual-health', label: 'الصحة الجنسية' },
-    { value: 'homeopathy', label: 'المثلية' },
-    { value: 'orthopedic', label: 'العظام والمفاصل' }
-  ];
-
-  sortOptions = [
-    { value: 'relevance', label: 'الأكثر صلة' },
-    { value: 'price-low', label: 'السعر: من الأقل للأعلى' },
-    { value: 'price-high', label: 'السعر: من الأعلى للأقل' },
-    { value: 'distance', label: 'الأقرب أولاً' },
-    { value: 'name', label: 'الاسم أ-ي' },
-    { value: 'stock', label: 'الأكثر توفراً' }
-  ];
-
-  // Search suggestions for no results
-  searchSuggestions = [
-    'باراسيتامول', 'إيبوبروفين', 'أسبرين', 'فيتامين د', 'أوميجا 3',
-    'مضاد حيوي', 'كريم مرطب', 'شراب كحة', 'قطرة عين', 'مسكن ألم'
-  ];
+  useLocationSearch: boolean = false;
+  maxDistance: number = 25;
+  userLocation?: {latitude: number, longitude: number};
+  searchResults: any[] = [];
+  allProducts: any[] = [];
+  isSearching: boolean = false;
+  hasSearched: boolean = false;
+  isInitialLoad: boolean = true;
 
   constructor(
-    private route: ActivatedRoute,
-    private router: Router,
-    private adminService: AdminService,
-    private cartService: CartService
+    private productService: ProductService,
+    private mapService: MapService,
+    private authService: AuthService,
+    private cartService: CartService,
+    private router: Router
   ) {}
 
   ngOnInit() {
-    this.getUserLocation();
-    this.updateCartCount();
-    this.setupScrollListener();
-    
-    // Check for query parameters
-    this.route.queryParams.subscribe(params => {
-      if (params['category']) {
-        this.filters.category = params['category'];
-      }
-      if (params['search']) {
-        this.searchQuery = params['search'];
-        this.searchProducts();
-      } else {
-        this.loadAllProducts();
-      }
-    });
-  }
-
-  getUserLocation() {
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          this.userLocation = {
-            latitude: position.coords.latitude,
-            longitude: position.coords.longitude
-          };
-          console.log('User location obtained:', this.userLocation);
-          this.loadNearbyPharmacies();
-        },
-        (error) => {
-          console.error('Error getting location:', error);
-          // Set default location (Cairo, Egypt)
-          this.userLocation = {
-            latitude: 30.0444,
-            longitude: 31.2357
-          };
-          this.loadNearbyPharmacies();
-        }
-      );
-    } else {
-      console.log('Geolocation is not supported');
-      this.userLocation = {
-        latitude: 30.0444,
-        longitude: 31.2357
-      };
-      this.loadNearbyPharmacies();
-    }
-  }
-
-  loadNearbyPharmacies() {
-    // Mock pharmacy data with locations in Cairo
-    this.nearbyPharmacies = [
-      {
-        id: 1,
-        name: 'صيدلية النور',
-        address: 'وسط البلد، القاهرة',
-        phone: '+20 123 456 789',
-        latitude: 30.0626,
-        longitude: 31.2497,
-        productsCount: 1250
-      },
-      {
-        id: 2,
-        name: 'صيدلية المدينة',
-        address: 'الزمالك، القاهرة',
-        phone: '+20 123 456 790',
-        latitude: 30.0444,
-        longitude: 31.2357,
-        productsCount: 980
-      },
-      {
-        id: 3,
-        name: 'صيدلية الصحة بلس',
-        address: 'مصر الجديدة، القاهرة',
-        phone: '+20 123 456 791',
-        latitude: 30.0875,
-        longitude: 31.3256,
-        productsCount: 1100
-      },
-      {
-        id: 4,
-        name: 'صيدلية الشفاء',
-        address: 'المعادي، القاهرة',
-        phone: '+20 123 456 792',
-        latitude: 29.9602,
-        longitude: 31.2569,
-        productsCount: 850
-      },
-      {
-        id: 5,
-        name: 'صيدلية الهرم',
-        address: 'الهرم، الجيزة',
-        phone: '+20 123 456 793',
-        latitude: 29.9792,
-        longitude: 31.1342,
-        productsCount: 750
-      }
-    ];
-
-    if (this.userLocation) {
-      this.calculatePharmacyDistances();
-    }
-  }
-
-  calculatePharmacyDistances() {
-    if (!this.userLocation) return;
-
-    this.nearbyPharmacies = this.nearbyPharmacies.map(pharmacy => ({
-      ...pharmacy,
-      distance: this.calculateDistance(
-        this.userLocation!.latitude,
-        this.userLocation!.longitude,
-        pharmacy.latitude,
-        pharmacy.longitude
-      )
-    })).sort((a, b) => (a.distance || 0) - (b.distance || 0));
-  }
-
-  private calculateDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
-    const R = 6371; // Radius of the Earth in kilometers
-    const dLat = this.deg2rad(lat2 - lat1);
-    const dLon = this.deg2rad(lon2 - lon1);
-    const a = 
-      Math.sin(dLat/2) * Math.sin(dLat/2) +
-      Math.cos(this.deg2rad(lat1)) * Math.cos(this.deg2rad(lat2)) * 
-      Math.sin(dLon/2) * Math.sin(dLon/2);
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-    return R * c; // Distance in kilometers
-  }
-
-  private deg2rad(deg: number): number {
-    return deg * (Math.PI/180);
+    this.getCurrentLocation();
+    this.loadAllProducts();
   }
 
   loadAllProducts() {
-    this.loading = true;
-    this.error = null;
-    
-    // First try to load from AdminService (real database)
-    this.adminService.getProducts().subscribe({
-      next: (products: any[]) => {
-        console.log('Products loaded from database:', products);
-        this.searchResults = products.map(product => this.mapProduct(product));
-        this.calculateProductDistances();
-        this.applyFilters();
-        this.loading = false;
-        this.noResults = this.searchResults.length === 0;
+    this.isSearching = true;
+    this.productService.getProducts().subscribe({
+      next: (products) => {
+        this.allProducts = products.map(product => ({
+          ...product,
+          pharmacyName: product.sellerName,
+          distanceText: 'Location not specified'
+        }));
+        this.searchResults = [...this.allProducts];
+        this.isSearching = false;
+        this.isInitialLoad = false;
       },
       error: (error) => {
-        console.error('Error loading products from database:', error);
-        // Fallback to sample data
-        this.loadSampleProducts();
+        console.error('Error loading products:', error);
+        this.isSearching = false;
+        this.isInitialLoad = false;
       }
     });
   }
 
-  searchProducts() {
-    if (!this.searchQuery.trim() && !this.filters.category) {
-      this.loadAllProducts();
+  async getCurrentLocation() {
+    try {
+      this.userLocation = await this.mapService.getCurrentLocation();
+    } catch (error) {
+      console.error('Error getting location:', error);
+    }
+  }
+
+  onLocationSelected(location: {latitude: number, longitude: number}) {
+    this.userLocation = location;
+  }
+
+  onSearchInput() {
+    // Auto search as user types if enabled
+    if (!this.searchQuery.trim()) {
+      this.clearSearch();
+    }
+  }
+
+  clearSearch() {
+    this.searchQuery = '';
+    this.searchResults = [...this.allProducts];
+    this.hasSearched = false;
+  }
+
+  performSearch() {
+    if (!this.searchQuery.trim()) {
+      this.searchResults = [...this.allProducts];
+      this.hasSearched = false;
       return;
     }
 
-    this.loading = true;
-    this.error = null;
-    this.noResults = false;
+    this.isSearching = true;
+    this.hasSearched = true;
 
-    // Try to load from AdminService first
-    this.adminService.getProducts().subscribe({
-      next: (products: any[]) => {
-        console.log('Search - Products from database:', products);
-        let filteredProducts = products.map(product => this.mapProduct(product));
-        
-        // Apply text search
-        if (this.searchQuery.trim()) {
-          const query = this.searchQuery.toLowerCase().trim();
-          filteredProducts = filteredProducts.filter(product => 
-            product.name.toLowerCase().includes(query) ||
-            product.description.toLowerCase().includes(query) ||
-            product.category.toLowerCase().includes(query) ||
-            (product.sellerName && product.sellerName.toLowerCase().includes(query))
-          );
+    if (this.useLocationSearch && this.userLocation) {
+      this.productService.searchNearbyProducts(
+        this.searchQuery,
+        this.userLocation.latitude,
+        this.userLocation.longitude,
+        this.maxDistance
+      ).subscribe({
+        next: (results) => {
+          this.searchResults = results;
+          this.isSearching = false;
+        },
+        error: (error) => {
+          console.error('Search error:', error);
+          this.searchResults = [];
+          this.isSearching = false;
         }
-        
-        this.searchResults = filteredProducts;
-        this.calculateProductDistances();
-        this.applyFilters();
-        this.loading = false;
-        this.noResults = this.searchResults.length === 0;
-      },
-      error: (error) => {
-        console.error('Error searching products:', error);
-        // Fallback to sample data
-        this.loadSampleProducts();
-      }
-    });
-  }
-
-  private mapProduct(product: any): Product {
-    // Map pharmacy coordinates for distance calculation
-    const pharmacyCoords = this.getPharmacyCoordinates(product.pharmacyId);
-    
-    return {
-      id: product.id,
-      name: product.name,
-      category: product.category || 'otc',
-      description: product.description || 'دواء عالي الجودة',
-      price: product.price || 50,
-      stock: product.stock || 10,
-      imageUrl: product.imageUrl || 'assets/images/default-medicine.png',
-      sellerType: product.sellerType || 'pharmacy',
-      sellerName: product.sellerName || product.pharmacyName,
-      pharmacyId: product.pharmacyId,
-      pharmacyName: product.pharmacyName,
-      prescription: product.prescription || false,
-      latitude: pharmacyCoords?.latitude,
-      longitude: pharmacyCoords?.longitude
-    };
-  }
-
-  private getPharmacyCoordinates(pharmacyId?: number) {
-    if (!pharmacyId) return null;
-    const pharmacy = this.nearbyPharmacies.find(p => p.id === pharmacyId);
-    return pharmacy ? { latitude: pharmacy.latitude, longitude: pharmacy.longitude } : null;
-  }
-
-  private calculateProductDistances() {
-    if (!this.userLocation) return;
-
-    this.searchResults = this.searchResults.map(product => {
-      if (product.latitude && product.longitude) {
-        product.distance = this.calculateDistance(
-          this.userLocation!.latitude,
-          this.userLocation!.longitude,
-          product.latitude,
-          product.longitude
-        );
-      }
-      return product;
-    });
-  }
-
-  loadSampleProducts() {
-    console.log('Loading sample products...');
-    
-    const sampleProducts: Product[] = [
-          {
-            id: 1,
-        name: 'باراسيتامول 500 مجم',
-        category: 'otc',
-        description: 'مسكن للألم وخافض للحرارة',
-        price: 25.50,
-        stock: 150,
-        imageUrl: 'assets/images/d15d6b380ee108fb61242f02418115f9.png',
-        sellerType: 'pharmacy',
-        sellerName: 'صيدلية النور',
-        pharmacyId: 1,
-        prescription: false,
-        latitude: 30.0626,
-        longitude: 31.2497
-          },
-          {
-            id: 2,
-        name: 'فيتامين د3 1000 وحدة',
-        category: 'vitamins-supplements',
-        description: 'مكمل غذائي لتقوية العظام',
-        price: 45.00,
-        stock: 80,
-        imageUrl: 'assets/images/f125ef9e5c913c92132edd4aa8e3875d.jpeg',
-        sellerType: 'rxclose',
-        sellerName: 'RxClose',
-        prescription: false,
-        latitude: 30.0444,
-        longitude: 31.2357
-      },
-      {
-        id: 3,
-        name: 'أموكسيسيللين 500 مجم',
-        category: 'prescription',
-        description: 'مضاد حيوي واسع المجال',
-        price: 85.00,
-        stock: 25,
-        imageUrl: 'assets/images/default-medicine.png',
-        sellerType: 'pharmacy',
-        sellerName: 'صيدلية المدينة',
-        pharmacyId: 2,
-        prescription: true,
-        latitude: 30.0444,
-        longitude: 31.2357
-      },
-      {
-        id: 4,
-        name: 'كريم بيتادين',
-        category: 'first-aid',
-        description: 'مطهر للجروح والعدوى',
-        price: 32.00,
-        stock: 60,
-        imageUrl: 'assets/images/default-medicine.png',
-        sellerType: 'pharmacy',
-        sellerName: 'صيدلية الصحة بلس',
-        pharmacyId: 3,
-        prescription: false,
-        latitude: 30.0875,
-        longitude: 31.3256
-      },
-      {
-        id: 5,
-        name: 'شراب فنتولين للربو',
-        category: 'respiratory-care',
-        description: 'موسع للشعب الهوائية',
-        price: 95.00,
-        stock: 15,
-        imageUrl: 'assets/images/default-medicine.png',
-        sellerType: 'pharmacy',
-        sellerName: 'صيدلية الشفاء',
-        pharmacyId: 4,
-        prescription: true,
-        latitude: 29.9602,
-        longitude: 31.2569
-      },
-      {
-        id: 6,
-        name: 'كريم للأطفال جونسون',
-        category: 'baby-care',
-        description: 'كريم مرطب لبشرة الأطفال',
-        price: 28.00,
-        stock: 120,
-        imageUrl: 'assets/images/default-medicine.png',
-        sellerType: 'pharmacy',
-        sellerName: 'صيدلية الهرم',
-        pharmacyId: 5,
-        prescription: false,
-        latitude: 29.9792,
-        longitude: 31.1342
-      },
-      {
-        id: 7,
-        name: 'حبوب منع الحمل ياسمين',
-        category: 'women-health',
-        description: 'وسيلة منع حمل هرمونية',
-        price: 120.00,
-        stock: 40,
-        imageUrl: 'assets/images/default-medicine.png',
-        sellerType: 'pharmacy',
-        sellerName: 'صيدلية النور',
-        pharmacyId: 1,
-        prescription: true,
-        latitude: 30.0626,
-        longitude: 31.2497
-      },
-      {
-        id: 8,
-        name: 'جهاز قياس السكر',
-        category: 'medical-devices',
-        description: 'جهاز رقمي لقياس مستوى السكر',
-        price: 350.00,
-        stock: 8,
-        imageUrl: 'assets/images/d97659eb371495c0c491f9fa51ae2a48.jpeg',
-        sellerType: 'rxclose',
-        sellerName: 'RxClose',
-        prescription: false,
-        latitude: 30.0444,
-        longitude: 31.2357
-      },
-      {
-        id: 9,
-        name: 'أوميجا 3 بلس',
-        category: 'vitamins-supplements',
-        description: 'مكمل غذائي للقلب والدماغ',
-        price: 180.00,
-        stock: 55,
-        imageUrl: 'assets/images/default-medicine.png',
-        sellerType: 'pharmacy',
-        sellerName: 'صيدلية المدينة',
-        pharmacyId: 2,
-        prescription: false,
-        latitude: 30.0444,
-        longitude: 31.2357
-      },
-      {
-        id: 10,
-        name: 'إيبوبروفين 400 مجم',
-        category: 'otc',
-        description: 'مضاد للالتهابات ومسكن للألم',
-        price: 18.00,
-        stock: 0,
-        imageUrl: 'assets/images/default-medicine.png',
-        sellerType: 'pharmacy',
-        sellerName: 'صيدلية الصحة بلس',
-        pharmacyId: 3,
-        prescription: false,
-        latitude: 30.0875,
-        longitude: 31.3256
-      },
-      {
-        id: 11,
-        name: 'شامبو نيزورال ضد القشرة',
-        category: 'personal-care',
-        description: 'شامبو طبي لعلاج قشرة الشعر',
-        price: 75.00,
-        stock: 35,
-        imageUrl: 'assets/images/default-medicine.png',
-        sellerType: 'pharmacy',
-        sellerName: 'صيدلية الشفاء',
-        pharmacyId: 4,
-        prescription: false,
-        latitude: 29.9602,
-        longitude: 31.2569
-      },
-      {
-        id: 12,
-        name: 'أقراص الكالسيوم والمغنيسيوم',
-        category: 'vitamins-supplements',
-        description: 'مكمل غذائي للعظام والعضلات',
-        price: 65.00,
-        stock: 90,
-        imageUrl: 'assets/images/default-medicine.png',
-        sellerType: 'pharmacy',
-        sellerName: 'صيدلية الهرم',
-        pharmacyId: 5,
-        prescription: false,
-        latitude: 29.9792,
-        longitude: 31.1342
-      },
-      {
-        id: 13,
-        name: 'لانسوبرازول لعلاج الحموضة',
-        category: 'prescription',
-        description: 'دواء لعلاج قرحة المعدة والحموضة',
-        price: 42.00,
-        stock: 3,
-        imageUrl: 'assets/images/default-medicine.png',
-        sellerType: 'pharmacy',
-        sellerName: 'صيدلية النور',
-        pharmacyId: 1,
-        prescription: true,
-        latitude: 30.0626,
-        longitude: 31.2497
-      },
-      {
-        id: 14,
-        name: 'كريم واقي من الشمس SPF 50',
-        category: 'beauty-cosmetics',
-        description: 'حماية فائقة من أشعة الشمس',
-        price: 95.00,
-        stock: 45,
-        imageUrl: 'assets/images/default-medicine.png',
-        sellerType: 'rxclose',
-        sellerName: 'RxClose',
-        prescription: false,
-        latitude: 30.0444,
-        longitude: 31.2357
-      },
-      {
-        id: 15,
-        name: 'شرائط اختبار الحمل',
-        category: 'women-health',
-        description: 'اختبار حمل منزلي دقيق',
-        price: 25.00,
-        stock: 75,
-        imageUrl: 'assets/images/default-medicine.png',
-        sellerType: 'pharmacy',
-        sellerName: 'صيدلية المدينة',
-        pharmacyId: 2,
-        prescription: false,
-        latitude: 30.0444,
-        longitude: 31.2357
-      }
-    ];
-
-    this.searchResults = sampleProducts;
-    this.calculateProductDistances();
-    this.applyFilters();
-    this.loading = false;
-    this.noResults = this.searchResults.length === 0;
-  }
-
-  // New methods for enhanced functionality
-  onSearchInput() {
-    // Implement real-time search suggestions here
-    if (this.searchQuery.length > 2) {
-      // Could add debounced search suggestions
+      });
+    } else {
+      this.productService.searchProducts(this.searchQuery).subscribe({
+        next: (results) => {
+          this.searchResults = results.map(product => ({
+            ...product,
+            pharmacyName: product.sellerName,
+            distanceText: 'Location not specified'
+          }));
+          this.isSearching = false;
+        },
+        error: (error) => {
+          console.error('Search error:', error);
+          this.searchResults = [];
+          this.isSearching = false;
+        }
+      });
     }
   }
 
-  selectQuickCategory(category: string) {
-    this.filters.category = category;
-    this.applyFilters();
-  }
-
-  get activeFiltersCount(): number {
-    let count = 0;
-    if (this.filters.category) count++;
-    if (this.filters.sellerType) count++;
-    if (this.filters.prescriptionRequired !== null) count++;
-    if (this.filters.availability !== 'all') count++;
-    if (this.filters.priceRange.min > 0 || this.filters.priceRange.max < 1000) count++;
-    if (this.filters.maxDistance) count++;
-    return count;
-  }
-
-  applyFilters() {
-    let filtered = [...this.searchResults];
-    
-    // Category filter
-    if (this.filters.category) {
-      filtered = filtered.filter(product => product.category === this.filters.category);
-    }
-
-    // Price range filter
-    filtered = filtered.filter(product => 
-      product.price >= this.filters.priceRange.min && 
-      product.price <= this.filters.priceRange.max
-    );
-
-    // Seller type filter
-    if (this.filters.sellerType) {
-      filtered = filtered.filter(product => product.sellerType === this.filters.sellerType);
-    }
-
-    // Prescription filter
-    if (this.filters.prescriptionRequired !== null) {
-      filtered = filtered.filter(product => !!product.prescription === this.filters.prescriptionRequired);
-    }
-
-    // Availability filter
-    if (this.filters.availability === 'in-stock') {
-      filtered = filtered.filter(product => product.stock > 0);
-    } else if (this.filters.availability === 'low-stock') {
-      filtered = filtered.filter(product => product.stock > 0 && product.stock < 10);
-    } else if (this.filters.availability === 'out-of-stock') {
-      filtered = filtered.filter(product => product.stock === 0);
-    }
-
-    // Distance filter
-    if (this.filters.maxDistance && this.userLocation) {
-      filtered = filtered.filter(product => 
-        !product.distance || product.distance <= this.filters.maxDistance!
-      );
-    }
-
-    // Apply sorting and update results
-    this.searchResults = this.applySorting(filtered);
-    this.noResults = this.searchResults.length === 0;
-  }
-
-  applySorting(products: Product[]) {
-    switch (this.filters.sortBy) {
-      case 'price-low':
-        return products.sort((a, b) => a.price - b.price);
-      case 'price-high':
-        return products.sort((a, b) => b.price - a.price);
-      case 'distance':
-        return products.sort((a, b) => (a.distance || 999) - (b.distance || 999));
-      case 'name':
-        return products.sort((a, b) => a.name.localeCompare(b.name));
-      case 'stock':
-        return products.sort((a, b) => b.stock - a.stock);
-      default:
-        return products;
-    }
-  }
-
-  // UI Helper methods
-  getStockClass(stock: number): string {
-    if (stock === 0) return 'out-of-stock';
-    if (stock < 10) return 'low-stock';
-    return 'in-stock';
-  }
-
-  getStockIcon(stock: number): string {
-    if (stock === 0) return 'fas fa-times-circle';
-    if (stock < 10) return 'fas fa-exclamation-triangle';
-    return 'fas fa-check-circle';
-  }
-
-  getStockText(stock: number): string {
-    if (stock === 0) return 'غير متوفر';
-    if (stock < 10) return `${stock} قطعة متبقية`;
-    return `متوفر (${stock})`;
-  }
-
-  onImageError(event: any) {
-    event.target.src = 'assets/images/default-medicine.png';
-  }
-
-  searchSuggestion(suggestion: string) {
-    this.searchQuery = suggestion;
-    this.searchProducts();
-  }
-
-  setupScrollListener() {
-    window.addEventListener('scroll', () => {
-      this.showBackToTop = window.pageYOffset > 400;
-    });
-  }
-
-  scrollToTop() {
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  }
-
-  resetFilters() {
-    this.filters = {
-      category: '',
-      priceRange: { min: 0, max: 1000 },
-      sellerType: '',
-      prescriptionRequired: null,
-      availability: 'all',
-      sortBy: 'relevance',
-      maxDistance: undefined
-    };
-    this.applyFilters();
-  }
-
-  toggleFilters() {
-    this.showFilters = !this.showFilters;
-  }
-
-  addToCart(product: Product) {
-    if (product.stock === 0) return;
-    
+  addToCart(product: any) {
     this.cartService.addToCart({
       id: product.id,
       name: product.name,
       price: product.price,
       imageUrl: product.imageUrl,
-      pharmacyId: product.pharmacyId || 1,
-      pharmacyName: product.sellerName || 'صيدلية عامة',
-      quantity: 1
+      pharmacyId: product.pharmacyId,
+      pharmacyName: product.pharmacyName || product.sellerName,
+      quantity: 1,
+      maxQuantity: product.stock
     });
     
-    this.updateCartCount();
+    // Show success message or notification here
     console.log('Product added to cart:', product.name);
   }
 
-  updateCartCount() {
-    const summary = this.cartService.getCartSummary();
-    this.cartItemCount = summary.totalItems;
-  }
-
-  viewProductDetails(product: Product) {
+  viewDetails(product: any) {
     this.router.navigate(['/auth/product-details', product.id]);
   }
 
-  navigateToPharmacy(pharmacy: Pharmacy) {
-    console.log('Navigate to pharmacy:', pharmacy.name);
-  }
-
-  getDirections(pharmacy: Pharmacy) {
-    if (this.userLocation) {
-      const url = `https://www.google.com/maps/dir/${this.userLocation.latitude},${this.userLocation.longitude}/${pharmacy.latitude},${pharmacy.longitude}`;
-      window.open(url, '_blank');
-    }
-  }
-
-  callPharmacy(phone: string) {
-    window.open(`tel:${phone}`, '_self');
-  }
-
-  getCategoryDisplay(category: string): string {
-    const cat = this.categories.find(c => c.value === category);
-    return cat ? cat.label : category;
-  }
-
-  clearSearch() {
-    this.searchQuery = '';
-    this.searchResults = [];
-    this.loadAllProducts();
-  }
-
-  goBack() {
-    this.router.navigate(['/home']);
+  getDistanceClass(distance: number): string {
+    if (distance <= 5) return 'very-close';
+    if (distance <= 15) return 'close';
+    return 'far';
   }
 } 

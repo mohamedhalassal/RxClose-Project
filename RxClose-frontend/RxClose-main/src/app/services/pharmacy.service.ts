@@ -3,7 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map, switchMap, catchError } from 'rxjs/operators';
 import { Pharmacy, PharmacyProduct } from '../models/pharmacy.model';
-import { AuthService } from './auth.service';
+import { AuthService } from '../services/auth.service';
 import { environment } from '../../environments/environment';
 
 @Injectable({
@@ -18,7 +18,7 @@ export class PharmacyService {
   ) {}
 
   private getCurrentUserId(): string {
-    const user = this.authService.getCurrentUser();
+    const user = this.authService.getCurrentUserValue();
     return user?.id?.toString() || '0';
   }
 
@@ -26,18 +26,18 @@ export class PharmacyService {
     // Get all pharmacies and find the one for current user
     return this.http.get<any[]>(`${this.baseUrl}`).pipe(
       map((pharmacies: any[]) => {
-        const currentUser = this.authService.getCurrentUser();
-        console.log('Current user:', currentUser);
+        const user = this.authService.getCurrentUserValue();
+        console.log('Current user:', user);
         console.log('All pharmacies:', pharmacies);
         
-        if (!currentUser) {
+        if (!user) {
           throw new Error('No current user found');
         }
         
         // Find pharmacy by owner email or user ID
         console.log('Looking for pharmacy with criteria:');
-        console.log('- currentUser.email:', currentUser.email);
-        console.log('- currentUser.id:', currentUser.id);
+        console.log('- currentUser.email:', user?.email);
+        console.log('- currentUser.id:', user?.id);
         
         pharmacies.forEach((p, index) => {
           console.log(`Pharmacy ${index}:`, {
@@ -50,10 +50,10 @@ export class PharmacyService {
         });
         
         const userPharmacy = pharmacies.find(p => 
-          p.email === currentUser.email || 
-          p.ownerId === currentUser.id ||
-          p.ownerEmail === currentUser.email ||
-          p.userId === currentUser.id
+          p.email === user?.email || 
+          p.ownerId === user?.id ||
+          p.ownerEmail === user?.email ||
+          p.userId === user?.id
         );
         
         console.log('Found pharmacy:', userPharmacy);
@@ -83,7 +83,8 @@ export class PharmacyService {
         const updatableFields = [
           'licenseNumber', 'businessHours', 
           'emergencyNumber', 'website', 'deliveryRadius', 'deliveryFee',
-          'acceptsInsurance', 'description', 'specializations', 'profileCompleted'
+          'acceptsInsurance', 'description', 'specializations', 
+          'latitude', 'longitude', 'profileCompleted'
         ];
         
         updatableFields.forEach(field => {
@@ -140,7 +141,8 @@ export class PharmacyService {
         const updatableFields = [
           'licenseNumber', 'businessHours', 
           'emergencyNumber', 'website', 'deliveryRadius', 'deliveryFee',
-          'acceptsInsurance', 'description', 'specializations'
+          'acceptsInsurance', 'description', 'specializations',
+          'latitude', 'longitude'
         ];
         
         updatableFields.forEach(field => {

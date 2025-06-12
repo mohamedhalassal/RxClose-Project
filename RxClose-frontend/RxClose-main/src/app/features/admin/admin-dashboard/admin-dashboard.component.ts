@@ -571,8 +571,8 @@ export class AdminDashboardComponent implements OnInit {
 
   ngOnInit() {
     // Check if user is logged in and is superadmin
-    const currentUser = this.authService.getCurrentUser();
-    const userRole = currentUser?.role?.toLowerCase();
+    const user = this.authService.getCurrentUserValue();
+    const userRole = user?.role?.toLowerCase();
     
     if (!this.authService.isLoggedIn() || userRole !== 'superadmin') {
       console.log('AdminDashboardComponent: Access denied, redirecting to login');

@@ -191,6 +191,10 @@ public class PharmacyService : IPharmacyService
             pharmacy.Description = updateDto.Description;
         if (!string.IsNullOrEmpty(updateDto.Specializations))
             pharmacy.Specializations = updateDto.Specializations;
+        if (updateDto.Latitude.HasValue)
+            pharmacy.Latitude = updateDto.Latitude;
+        if (updateDto.Longitude.HasValue)
+            pharmacy.Longitude = updateDto.Longitude;
         if (updateDto.ProfileCompleted.HasValue)
             pharmacy.ProfileCompleted = updateDto.ProfileCompleted.Value;
 

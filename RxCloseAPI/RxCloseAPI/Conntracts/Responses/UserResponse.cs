@@ -7,6 +7,8 @@ public record UserResponse(
         string UserName,
         string Email,
         string Location,
+        double? Latitude,
+        double? Longitude,
         string Role,
         DateTime CreatedAt,
         DateTime? LastLogin,

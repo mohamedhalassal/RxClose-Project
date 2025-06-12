@@ -174,4 +174,31 @@ public class ProductController : ControllerBase
         var response = products.Adapt<IEnumerable<ProductDto>>();
         return Ok(response);
     }
+
+    [HttpGet("search-nearby")]
+    public async Task<IActionResult> SearchNearby([FromQuery] string query, [FromQuery] double latitude, [FromQuery] double longitude, [FromQuery] double maxDistance = 50, CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrEmpty(query))
+        {
+            return BadRequest(new { message = "Search query is required" });
+        }
+
+        if (latitude < -90 || latitude > 90)
+        {
+            return BadRequest(new { message = "Invalid latitude. Must be between -90 and 90" });
+        }
+
+        if (longitude < -180 || longitude > 180)
+        {
+            return BadRequest(new { message = "Invalid longitude. Must be between -180 and 180" });
+        }
+
+        if (maxDistance <= 0 || maxDistance > 1000)
+        {
+            return BadRequest(new { message = "Invalid max distance. Must be between 1 and 1000 km" });
+        }
+
+        var results = await _productService.SearchNearbyAsync(query, latitude, longitude, maxDistance, cancellationToken);
+        return Ok(results);
+    }
 } 

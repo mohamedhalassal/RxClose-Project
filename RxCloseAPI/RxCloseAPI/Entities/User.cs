@@ -9,6 +9,8 @@ public sealed class User
     public string Password { get; set; } = string.Empty;
     public string Email { get; set; } = string.Empty;
     public string Location { get; set; } = string.Empty;
+    public double? Latitude { get; set; }
+    public double? Longitude { get; set; }
     public string Role { get; set; } = "user"; // user, admin, superadmin
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime? LastLogin { get; set; }

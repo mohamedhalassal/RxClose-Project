@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AdminService } from '../../../services/admin.service';
+import { AuthService } from '../../../services/auth.service';
 
 interface User {
   id: number;
@@ -706,7 +707,7 @@ export class UsersComponent implements OnInit {
   isEditMode = false;
   currentUser: Partial<User> = {};
 
-  constructor(private adminService: AdminService) {}
+  constructor(private adminService: AdminService, private authService: AuthService) {}
 
   ngOnInit() {
     this.loadUsers();

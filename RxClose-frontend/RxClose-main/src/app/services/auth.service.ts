@@ -4,13 +4,7 @@ import { BehaviorSubject, Observable, throwError } from 'rxjs';
 import { Router } from '@angular/router';
 import { environment } from '../../environments/environment';
 import { catchError, tap } from 'rxjs/operators';
-
-export interface User {
-  id: number;
-  email: string;
-  role: string;
-  name: string;
-}
+import { User } from '../models/user.model';
 
 @Injectable({
   providedIn: 'root'
@@ -141,7 +135,7 @@ export class AuthService {
   }
 
   redirectUserByRole(): void {
-    const user = this.getCurrentUser();
+    const user = this.currentUserSubject.value;
     if (!user) {
       this.router.navigate(['/auth/login']);
       return;
@@ -168,26 +162,51 @@ export class AuthService {
     return localStorage.getItem(this.TOKEN_KEY);
   }
 
-  getCurrentUser(): User | null {
-    const user = this.currentUserSubject.value;
-    console.log('AuthService: Getting current user:', user); // Debug log
-    return user;
-  }
-
-  updateUserProfile(userData: Partial<User>): Observable<User> {
-    return this.http.put<User>(`${this.apiUrl}/users/profile`, userData).pipe(
-      tap(updatedUser => {
-        localStorage.setItem(this.USER_KEY, JSON.stringify(updatedUser));
-        this.currentUserSubject.next(updatedUser);
+  getCurrentUser(): Observable<User> {
+    const headers = this.getAuthHeaders();
+    return this.http.get<User>(`${this.apiUrl}/users/profile`, { headers }).pipe(
+      tap(user => {
+        this.currentUserSubject.next(user);
+        localStorage.setItem(this.USER_KEY, JSON.stringify(user));
       })
     );
   }
 
-  changePassword(currentPassword: string, newPassword: string): Observable<any> {
-    return this.http.post(`${this.apiUrl}/users/change-password`, {
-      currentPassword,
-      newPassword
-    });
+  updateProfile(user: User): Observable<User> {
+    const headers = this.getAuthHeaders();
+    return this.http.put<User>(`${this.apiUrl}/users/profile`, user, { headers }).pipe(
+      tap(updatedUser => {
+        this.currentUserSubject.next(updatedUser);
+        localStorage.setItem(this.USER_KEY, JSON.stringify(updatedUser));
+      })
+    );
+  }
+
+  private getAuthHeaders() {
+    const token = this.getToken();
+    return {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json'
+    };
+  }
+
+  changePassword(passwordData: {
+    currentPassword: string;
+    newPassword: string;
+    confirmPassword: string;
+  }): Observable<any> {
+    // Only send currentPassword and newPassword to backend
+    const payload = {
+      currentPassword: passwordData.currentPassword,
+      newPassword: passwordData.newPassword
+    };
+    const headers = this.getAuthHeaders();
+    return this.http.post(`${this.apiUrl}/users/change-password`, payload, { headers });
+  }
+
+  toggleTwoFactor(): Observable<any> {
+    const headers = this.getAuthHeaders();
+    return this.http.post(`${this.apiUrl}/toggle-2fa`, {}, { headers });
   }
 
   forgotPassword(email: string): Observable<any> {
@@ -205,19 +224,7 @@ export class AuthService {
     return this.http.post(`${this.apiUrl}/users/forgot-password`, { email });
   }
 
-  // Add method to refresh user data
-  refreshUserData(): Observable<User> {
-    const user = this.getCurrentUser();
-    if (!user) {
-      return throwError(() => new Error('No user logged in'));
-    }
-    
-    return this.http.get<User>(`${this.apiUrl}/users/${user.id}`).pipe(
-      tap(updatedUser => {
-        console.log('Refreshed user data:', updatedUser); // Debug log
-        localStorage.setItem(this.USER_KEY, JSON.stringify(updatedUser));
-        this.currentUserSubject.next(updatedUser);
-      })
-    );
+  getCurrentUserValue(): User | null {
+    return this.currentUserSubject.value;
   }
 } 

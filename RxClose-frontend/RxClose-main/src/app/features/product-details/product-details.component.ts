@@ -1,11 +1,14 @@
 import { Component, OnInit, OnDestroy, PLATFORM_ID, Inject } from '@angular/core';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
-import { RouterLink, ActivatedRoute, Router } from '@angular/router';
+import { RouterLink, ActivatedRoute, Router, NavigationEnd } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { interval, Subscription } from 'rxjs';
-import { AdminService } from '../../services/admin.service';
-import { CartService } from '../../services/cart.service';
+import { ProductService } from '../../services/product.service';
+import { CartService, CartItem } from '../../services/cart.service';
 import { ChatWidgetComponent } from '../../shared/components/chat-widget/chat-widget.component';
+import { FooterComponent } from '../../shared/components/footer/footer.component';
+import { NavbarComponent } from '../../shared/components/navbar/navbar.component';
+import { filter } from 'rxjs/operators';
 
 interface Product {
   id: number;
@@ -56,7 +59,7 @@ interface Review {
 @Component({
   selector: 'app-product-details',
   standalone: true,
-  imports: [CommonModule, RouterLink, FormsModule, ChatWidgetComponent],
+  imports: [CommonModule, RouterLink, FormsModule, ChatWidgetComponent, FooterComponent, NavbarComponent],
   templateUrl: './product-details.component.html',
   styleUrl: './product-details.component.scss'
 })
@@ -83,6 +86,10 @@ export class ProductDetailsComponent implements OnInit, OnDestroy {
   private scrollAmount = 0;
   private readonly SCROLL_INTERVAL = 4000;
 
+  // Route subscriptions
+  private routeSubscription?: Subscription;
+  private routerSubscription?: Subscription;
+
   // Mock additional images
   productImages: string[] = [];
 
@@ -90,47 +97,90 @@ export class ProductDetailsComponent implements OnInit, OnDestroy {
     @Inject(PLATFORM_ID) private platformId: Object,
     private route: ActivatedRoute,
     private router: Router,
-    private adminService: AdminService,
+    private productService: ProductService,
     private cartService: CartService
   ) {}
 
   ngOnInit() {
     this.updateCartCount();
-    this.route.queryParams.subscribe(params => {
-      const productId = params['id'];
-      if (productId) {
-        this.loadProduct(+productId);
+    console.log('ProductDetailsComponent initialized');
+    
+    // Subscribe to route params changes
+    this.routeSubscription = this.route.params.subscribe(params => {
+      const id = params['id'];
+      console.log('Route params changed, new ID:', id);
+      console.log('Current URL:', this.router.url);
+      console.log('Route snapshot:', this.route.snapshot.url);
+      
+      if (id) {
+        this.loadProductDetails(id);
       } else {
-        this.loadSampleProduct();
+        console.error('No ID parameter found in route');
+        this.error = 'Invalid product ID';
+        this.loading = false;
       }
     });
+    
+    // Listen to router events to detect unwanted navigation
+    this.routerSubscription = this.router.events
+      .pipe(filter(event => event instanceof NavigationEnd))
+      .subscribe((event: NavigationEnd) => {
+        console.log('Navigation ended to:', event.url);
+        console.log('Expected URL pattern: /auth/product-details/[number]');
+        
+        // Check if this is an unexpected navigation
+        if (event.url.includes('/auth/product-details/') && 
+            !event.url.match(/\/auth\/product-details\/\d+$/)) {
+          console.warn('Unexpected navigation pattern detected:', event.url);
+        }
+      });
   }
 
   ngOnDestroy() {
     this.stopAutoScroll();
+    
+    // Unsubscribe from all subscriptions
+    if (this.routeSubscription) {
+      this.routeSubscription.unsubscribe();
+    }
+    if (this.routerSubscription) {
+      this.routerSubscription.unsubscribe();
+    }
   }
 
-  loadProduct(productId: number) {
+  loadProductDetails(id: string) {
+    // Reset component state
     this.loading = true;
+    this.error = null;
+    this.product = null;
+    this.pharmacy = null;
+    this.relatedProducts = [];
+    this.selectedQuantity = 1;
+    this.currentImageIndex = 0;
+    this.activeTab = 'details';
+    this.showFullDescription = false;
     
-    // Try to load from API
-    this.adminService.getProducts().subscribe({
-      next: (products: any[]) => {
-        const foundProduct = products.find(p => p.id === productId);
-        if (foundProduct) {
-          this.product = this.mapProduct(foundProduct);
+    const numericId = Number(id);
+    
+    // Load specific product from API
+    this.productService.getProduct(numericId).subscribe({
+      next: (product: any) => {
+        console.log('Product loaded:', product);
+        if (product) {
+          this.product = this.mapProduct(product);
           this.loadPharmacyInfo();
           this.loadRelatedProducts();
           this.loadReviews();
           this.setupProductImages();
         } else {
-          this.loadSampleProduct();
+          this.error = 'Product not found';
         }
         this.loading = false;
       },
       error: (error) => {
         console.error('Error loading product:', error);
-        this.loadSampleProduct();
+        this.error = 'Product not found';
+        this.product = null;
         this.loading = false;
       }
     });
@@ -143,66 +193,31 @@ export class ProductDetailsComponent implements OnInit, OnDestroy {
       description: product.description,
       price: product.price,
       stock: product.stock,
-      imageUrl: product.imageUrl || 'assets/images/hero-image.jpeg',
+      imageUrl: product.imageUrl,
       category: product.category,
-      sellerType: product.sellerType || 'pharmacy',
+      sellerType: product.sellerType,
       sellerName: product.sellerName,
       pharmacyId: product.pharmacyId,
       pharmacyName: product.pharmacyName,
       prescription: product.prescription,
       details: {
-        activeIngredient: product.activeIngredient || 'Paracetamol 500mg',
-        manufacturer: product.manufacturer || 'Pharmaceutical Company Ltd.',
-        expiryDate: product.expiryDate || '12/2025',
-        dosage: product.dosage || 'Adults: 1-2 tablets every 4-6 hours. Maximum 8 tablets in 24 hours.',
-        sideEffects: product.sideEffects || ['Nausea', 'Drowsiness', 'Dizziness'],
-        contraindications: product.contraindications || ['Pregnancy', 'Liver disease', 'Kidney disease'],
-        directions: product.directions || 'Take with food. Do not exceed recommended dose.',
-        storage: product.storage || 'Store in a cool, dry place away from direct sunlight.'
+        activeIngredient: product.activeIngredient,
+        manufacturer: product.manufacturer,
+        expiryDate: product.expiryDate,
+        dosage: product.dosage,
+        sideEffects: product.sideEffects,
+        contraindications: product.contraindications,
+        directions: product.directions,
+        storage: product.storage
       }
     };
-  }
-
-  loadSampleProduct() {
-    this.product = {
-      id: 1,
-      name: 'Paracetamol 500mg',
-      description: 'Effective pain relief and fever reducer. Suitable for headaches, muscle pain, arthritis, backache, toothaches, colds, and fevers.',
-      price: 25.50,
-      stock: 150,
-      imageUrl: 'assets/images/d15d6b380ee108fb61242f02418115f9.png',
-      category: 'otc',
-      sellerType: 'pharmacy',
-      sellerName: 'Al Noor Pharmacy',
-      pharmacyId: 1,
-      pharmacyName: 'Al Noor Pharmacy',
-      prescription: false,
-      details: {
-        activeIngredient: 'Paracetamol 500mg',
-        manufacturer: 'Global Pharma Industries',
-        expiryDate: '06/2026',
-        dosage: 'Adults and children over 12 years: 1-2 tablets every 4-6 hours as needed. Maximum 8 tablets in 24 hours.',
-        sideEffects: ['Nausea (rare)', 'Skin rash (very rare)', 'Liver damage (with overdose)'],
-        contraindications: ['Severe liver disease', 'Severe kidney disease', 'Known hypersensitivity to paracetamol'],
-        directions: 'Swallow tablets whole with water. Can be taken with or without food. Do not exceed the recommended dose.',
-        storage: 'Store below 25°C in a dry place. Keep out of reach of children.'
-      }
-    };
-    
-    this.loadPharmacyInfo();
-    this.loadRelatedProducts();
-    this.loadReviews();
-    this.setupProductImages();
-    this.loading = false;
   }
 
   setupProductImages() {
-    if (this.product) {
-      this.productImages = [
-        this.product.imageUrl,
-        'assets/images/f125ef9e5c913c92132edd4aa8e3875d.jpeg',
-        'assets/images/d97659eb371495c0c491f9fa51ae2a48.jpeg'
-      ];
+    if (this.product && this.product.imageUrl) {
+      this.productImages = [this.product.imageUrl];
+    } else {
+      this.productImages = [];
     }
   }
 
@@ -224,7 +239,7 @@ export class ProductDetailsComponent implements OnInit, OnDestroy {
   }
 
   loadRelatedProducts() {
-    this.adminService.getProducts().subscribe({
+    this.productService.getProducts().subscribe({
       next: (products: any[]) => {
         // Filter related products by category
         this.relatedProducts = products
@@ -232,52 +247,13 @@ export class ProductDetailsComponent implements OnInit, OnDestroy {
           .slice(0, 8)
           .map(p => this.mapProduct(p));
         
-        if (this.relatedProducts.length === 0) {
-          this.loadSampleRelatedProducts();
-        }
         this.startAutoScroll();
       },
       error: (error) => {
         console.error('Error loading related products:', error);
-        this.loadSampleRelatedProducts();
         this.startAutoScroll();
       }
     });
-  }
-
-  loadSampleRelatedProducts() {
-    this.relatedProducts = [
-      {
-        id: 2,
-        name: 'Ibuprofen 400mg',
-        description: 'Anti-inflammatory pain relief',
-        price: 35.00,
-        stock: 80,
-        imageUrl: 'assets/images/img1.jpeg',
-        category: 'otc',
-        sellerType: 'pharmacy'
-      },
-      {
-        id: 3,
-        name: 'Aspirin 100mg',
-        description: 'Heart health and pain relief',
-        price: 22.00,
-        stock: 120,
-        imageUrl: 'assets/images/img2.jpeg',
-        category: 'otc',
-        sellerType: 'pharmacy'
-      },
-      {
-        id: 4,
-        name: 'Vitamin D3',
-        description: 'Bone health supplement',
-        price: 45.00,
-        stock: 60,
-        imageUrl: 'assets/images/img4.jpeg',
-        category: 'vitamins-supplements',
-        sellerType: 'rxclose'
-      }
-    ];
   }
 
   loadReviews() {
@@ -329,19 +305,37 @@ export class ProductDetailsComponent implements OnInit, OnDestroy {
   decreaseQuantity() {
     if (this.selectedQuantity > 1) {
       this.selectedQuantity--;
+    } else {
+      this.showNotification('الكمية لا يمكن أن تكون أقل من 1', 'info');
     }
   }
 
   increaseQuantity() {
     if (this.product && this.selectedQuantity < this.product.stock) {
       this.selectedQuantity++;
+    } else if (this.product) {
+      this.showNotification(`الكمية المتاحة في المخزن: ${this.product.stock} فقط`, 'error');
     }
   }
 
   // Cart and wishlist actions
   addToCart() {
+    console.log('addToCart called for product:', this.product?.id);
+    
     if (this.product) {
-      this.cartService.addToCart({
+      if (this.product.stock === 0) {
+        this.showNotification('عذراً، هذا المنتج غير متوفر حالياً', 'error');
+        return;
+      }
+      
+      if (this.selectedQuantity > this.product.stock) {
+        this.showNotification(`الكمية المطلوبة (${this.selectedQuantity}) أكبر من المتاح (${this.product.stock})`, 'error');
+        return;
+      }
+
+      console.log('Adding to cart - Product ID:', this.product.id, 'Current route:', this.router.url);
+      
+      const cartItem = {
         id: this.product.id,
         name: this.product.name,
         price: this.product.price,
@@ -349,14 +343,83 @@ export class ProductDetailsComponent implements OnInit, OnDestroy {
         quantity: this.selectedQuantity,
         pharmacyId: this.product.pharmacyId,
         pharmacyName: this.product.pharmacyName
-      });
+      };
+      
+      console.log('Cart item to add:', cartItem);
+      
+      this.cartService.addToCart(cartItem);
       this.updateCartCount();
+      
+      // Show success notification
+      this.showNotification(`تم إضافة ${this.selectedQuantity} من ${this.product.name} إلى السلة بنجاح!`, 'success');
+      
+      console.log('After adding to cart - Current route:', this.router.url);
     }
   }
 
   buyNow() {
-    this.addToCart();
-    this.router.navigate(['/auth/cart']);
+    console.log('buyNow called for product:', this.product?.id);
+    
+    if (this.product) {
+      if (this.product.stock === 0) {
+        this.showNotification('عذراً، هذا المنتج غير متوفر حالياً', 'error');
+        return;
+      }
+      
+      console.log('Buy now - adding to cart first');
+      this.addToCart();
+      
+      console.log('Buy now - navigating to cart after delay');
+      // Small delay to show the success message before navigation
+      setTimeout(() => {
+        console.log('Navigating to cart page');
+        this.router.navigate(['/auth/cart']);
+      }, 1500);
+    }
+  }
+
+  // Show notification to user
+  private showNotification(message: string, type: 'success' | 'error' | 'info' = 'info') {
+    // Create notification element
+    const notification = document.createElement('div');
+    notification.className = `notification notification-${type}`;
+    notification.innerHTML = `
+      <div class="notification-content">
+        <i class="fas ${type === 'success' ? 'fa-check-circle' : type === 'error' ? 'fa-exclamation-circle' : 'fa-info-circle'}"></i>
+        <span>${message}</span>
+      </div>
+    `;
+    
+    // Add styles
+    notification.style.cssText = `
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background: ${type === 'success' ? '#28a745' : type === 'error' ? '#dc3545' : '#17a2b8'};
+      color: white;
+      padding: 15px 20px;
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+      z-index: 9999;
+      font-family: Arial, sans-serif;
+      font-size: 14px;
+      max-width: 350px;
+      animation: slideInRight 0.3s ease-out;
+      direction: rtl;
+    `;
+    
+    // Add to body
+    document.body.appendChild(notification);
+    
+    // Remove after 3 seconds
+    setTimeout(() => {
+      notification.style.animation = 'slideOutRight 0.3s ease-in';
+      setTimeout(() => {
+        if (notification.parentNode) {
+          notification.parentNode.removeChild(notification);
+        }
+      }, 300);
+    }, 3000);
   }
 
   toggleWishlist() {
@@ -449,9 +512,7 @@ export class ProductDetailsComponent implements OnInit, OnDestroy {
 
   // Related product actions
   viewProduct(product: Product) {
-    this.router.navigate(['/auth/product-details'], {
-      queryParams: { id: product.id }
-    });
+    this.router.navigate(['/auth/product-details', product.id]);
   }
 
   addRelatedToCart(product: Product) {

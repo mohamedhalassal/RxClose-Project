@@ -16,4 +16,5 @@ public interface IProductService
     Task<object> GetStatisticsAsync(CancellationToken cancellationToken = default);
     Task<IEnumerable<string>> GetCategoriesAsync(CancellationToken cancellationToken = default);
     Task<IEnumerable<Product>> SearchAsync(string query, CancellationToken cancellationToken = default);
+    Task<IEnumerable<object>> SearchNearbyAsync(string query, double userLatitude, double userLongitude, double maxDistanceKm = 50, CancellationToken cancellationToken = default);
 } 

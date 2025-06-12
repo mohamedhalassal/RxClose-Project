@@ -1,8 +1,9 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ViewChild, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { PharmacyService } from '../../../services/pharmacy.service';
 import { Product } from '../../../models/product-updated.model';
+import * as XLSX from 'xlsx';
 
 @Component({
   selector: 'app-products',
@@ -25,6 +26,11 @@ import { Product } from '../../../models/product-updated.model';
               <i class="fas fa-plus"></i>
               Add Pharmacy Product
             </button>
+            <button (click)="triggerExcelUpload()" class="import-btn">
+              <i class="fas fa-file-excel"></i>
+              Import Excel
+            </button>
+            <input type="file" #excelInput accept=".xlsx,.xls" (change)="onExcelFileChange($event)" style="display: none;">
           </div>
         </div>
       </div>
@@ -414,6 +420,11 @@ import { Product } from '../../../models/product-updated.model';
       margin: 0.5rem 0 0 0;
     }
 
+    .header-actions {
+      display: flex;
+      gap: 1rem;
+    }
+
     .add-btn {
       background: linear-gradient(135deg, #667eea, #764ba2);
       color: white;
@@ -432,6 +443,26 @@ import { Product } from '../../../models/product-updated.model';
     .add-btn:hover {
       transform: translateY(-2px);
       box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+    }
+
+    .import-btn {
+      background: linear-gradient(135deg, #48bb78, #38a169);
+      color: white;
+      border: none;
+      padding: 0.75rem 1.5rem;
+      border-radius: 12px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      transition: all 0.3s ease;
+    }
+
+    .import-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px rgba(72, 187, 120, 0.4);
     }
 
     .stats-grid {
@@ -1011,6 +1042,8 @@ import { Product } from '../../../models/product-updated.model';
   `]
 })
 export class ProductsComponent implements OnInit {
+  @ViewChild('excelInput') excelInput!: ElementRef<HTMLInputElement>;
+  
   products: Product[] = [];
   filteredProducts: Product[] = [];
   selectedCategory: string = 'all';
@@ -1034,6 +1067,10 @@ export class ProductsComponent implements OnInit {
     this.loadProducts();
   }
 
+  triggerExcelUpload() {
+    this.excelInput.nativeElement.click();
+  }
+
   loadProducts() {
     this.pharmacyService.getProducts().subscribe({
       next: (products: any) => {
@@ -1048,8 +1085,6 @@ export class ProductsComponent implements OnInit {
       }
     });
   }
-
-
 
   filterProducts() {
     let filtered = this.products;
@@ -1244,5 +1279,95 @@ export class ProductsComponent implements OnInit {
         }
       });
     }
+  }
+
+  onExcelFileChange(event: any) {
+    const target: DataTransfer = <DataTransfer>(event.target);
+    if (target.files.length !== 1) return;
+
+    const reader: FileReader = new FileReader();
+    reader.onload = (e: any) => {
+      const bstr: string = e.target.result;
+      const wb: XLSX.WorkBook = XLSX.read(bstr, { type: 'binary' });
+      const wsname: string = wb.SheetNames[0];
+      const ws: XLSX.WorkSheet = wb.Sheets[wsname];
+      const data = XLSX.utils.sheet_to_json(ws, { header: 1 });
+
+      // Skip header row and map to product objects
+      const products = data.slice(1).map((row: any) => ({
+        name: row[0],
+        category: row[1],
+        description: row[2] || '',
+        price: parseFloat(row[3]) || 0,
+        quantity: parseInt(row[4]) || 0,
+        imageUrl: row[5] || '',
+        requiresPrescription: row[6] === 'Yes' || row[6] === true || row[6] === 'TRUE'
+      })).filter(product => product.name); // Filter out empty rows
+
+      // Add each product to the database
+      this.bulkAddProducts(products);
+    };
+    reader.readAsBinaryString(target.files[0]);
+  }
+
+  bulkAddProducts(products: any[]) {
+    if (products.length === 0) {
+      alert('No valid products found in the Excel file');
+      return;
+    }
+
+    // First get pharmacy profile to get pharmacy ID
+    this.pharmacyService.getPharmacyProfile().subscribe({
+      next: (pharmacy: any) => {
+        let successCount = 0;
+        let errorCount = 0;
+        const totalProducts = products.length;
+
+        products.forEach((product, index) => {
+          // Format product data according to backend requirements
+          const productData = {
+            name: product.name,
+            description: product.description,
+            price: product.price,
+            category: product.category,
+            stock: product.quantity, // Backend uses 'stock' not 'quantity'
+            imageUrl: product.imageUrl,
+            prescription: product.requiresPrescription, // Backend uses 'prescription' not 'requiresPrescription'
+            pharmacyId: pharmacy.id,
+            sellerType: 'pharmacy',
+            sellerName: pharmacy.name
+          };
+
+          console.log(`Adding product ${index + 1}/${totalProducts}:`, productData);
+
+          this.pharmacyService.addProduct(productData).subscribe({
+            next: (response) => {
+              successCount++;
+              console.log(`Product ${product.name} added successfully`);
+              
+              // If this is the last product, refresh the list and show summary
+              if (successCount + errorCount === totalProducts) {
+                this.loadProducts(); // Refresh the products list
+                alert(`Import completed!\nSuccessfully added: ${successCount} products\nFailed: ${errorCount} products`);
+              }
+            },
+            error: (error) => {
+              errorCount++;
+              console.error(`Failed to add product ${product.name}:`, error);
+              
+              // If this is the last product, show summary
+              if (successCount + errorCount === totalProducts) {
+                this.loadProducts(); // Refresh the products list even if some failed
+                alert(`Import completed!\nSuccessfully added: ${successCount} products\nFailed: ${errorCount} products`);
+              }
+            }
+          });
+        });
+      },
+      error: (error: any) => {
+        console.error('Error getting pharmacy profile:', error);
+        alert('Failed to get pharmacy information. Please try again.');
+      }
+    });
   }
 } 

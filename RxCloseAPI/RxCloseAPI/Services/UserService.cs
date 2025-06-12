@@ -3,6 +3,7 @@ using RxCloseAPI.Entities;
 using RxCloseAPI.Persistence;
 using System.Threading;
 using System.Text.Json;
+using BCrypt.Net;
 
 namespace RxCloseAPI.Services;
 
@@ -58,6 +59,8 @@ public class UserService : IUserService
         existingUser.UserName = user.UserName;
         existingUser.Password = user.Password;
         existingUser.Location = user.Location;
+        existingUser.Latitude = user.Latitude;
+        existingUser.Longitude = user.Longitude;
         existingUser.Role = user.Role;
 
         Console.WriteLine($"Role changed from '{oldRole}' to '{existingUser.Role}'");
@@ -106,5 +109,17 @@ public class UserService : IUserService
             Console.WriteLine($"No user found with email: {email}");
         }
         return user;
+    }
+
+    public async Task<bool> ChangePasswordAsync(int userId, string currentPassword, string newPassword, CancellationToken cancellationToken = default)
+    {
+        var user = await GetAsync(userId, cancellationToken);
+        if (user == null) return false;
+        // تحقق من كلمة المرور القديمة
+        if (!BCrypt.Net.BCrypt.Verify(currentPassword, user.Password))
+            return false;
+        user.Password = BCrypt.Net.BCrypt.HashPassword(newPassword);
+        await _context.SaveChangesAsync(cancellationToken);
+        return true;
     }
 }

@@ -14,7 +14,7 @@ import { CartpageComponent } from './features/cartpage/cartpage.component';
 import { ProductDetailsComponent } from './features/product-details/product-details.component';
 import { ConvertAiComponent } from './features/ai/convert-ai/convert-ai.component';
 import { CheckoutComponent } from './checkout/checkout.component';
-import { ProfileComponent } from './profile/profile.component';
+import { ProfileComponent } from './features/profile/profile.component';
 import { BlankLayoutComponent } from './layouts/blank-layout/blank-layout.component';
 import { NotfoundComponent } from './components/notfound/notfound.component';
 import { ForgotPasswordComponent } from './components/forgot-password/forgot-password.component';
@@ -44,7 +44,7 @@ export const routes: Routes = [
           { path: 'contact', component: ContactpageComponent },
           { path: 'cart', component: CartpageComponent },
 
-          { path: 'product-details', component: ProductDetailsComponent },
+          { path: 'product-details/:id', component: ProductDetailsComponent },
           { path: 'convert', component: ConvertAiComponent },
           { path: 'checkout', component: CheckoutComponent },
           { path: 'profile', component: ProfileComponent },

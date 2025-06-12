@@ -69,12 +69,6 @@ export class HomeComponent implements OnInit {
       value: 'vitamins-supplements',
       image: 'assets/images/73daf744d18f9948dcf5d4a9bc3d5c69.png',
       description: 'Nutritional supplements and vitamins'
-    },
-    {
-      name: 'Baby Care',
-      value: 'baby-care',
-      image: 'assets/images/aa74ea5e34ecf86bab83b20b2442c1c3.png',
-      description: 'Baby health and care products'
     }
   ];
 
@@ -301,9 +295,7 @@ export class HomeComponent implements OnInit {
   }
 
   viewProductDetails(product: Product) {
-    this.router.navigate(['/auth/product-details'], {
-      queryParams: { id: product.id }
-    });
+    this.router.navigate(['/auth/product-details', product.id]);
   }
 
   clearSearch() {

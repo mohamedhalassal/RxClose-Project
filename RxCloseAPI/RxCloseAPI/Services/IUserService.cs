@@ -11,5 +11,7 @@
         Task<bool> DeleteAsync(int id, CancellationToken cancellationToken = default);
 
         Task<User?> GetByEmailAsync(string email, CancellationToken cancellationToken);
+
+        Task<bool> ChangePasswordAsync(int userId, string currentPassword, string newPassword, CancellationToken cancellationToken = default);
     }
 }

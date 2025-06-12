@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Location-Based Search API</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input, button {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        .results {
+            margin-top: 20px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 5px;
+        }
+        .product {
+            background: white;
+            margin: 10px 0;
+            padding: 15px;
+            border-radius: 5px;
+            border-left: 4px solid #007bff;
+        }
+        .distance {
+            color: #28a745;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 Test Location-Based Search API</h1>
+        
+        <div class="form-group">
+            <label for="query">Search Query:</label>
+            <input type="text" id="query" value="panadol" placeholder="Enter medicine name">
+        </div>
+        
+        <div class="form-group">
+            <label for="latitude">Your Latitude:</label>
+            <input type="number" id="latitude" value="30.0444" step="0.000001" placeholder="e.g. 30.0444">
+        </div>
+        
+        <div class="form-group">
+            <label for="longitude">Your Longitude:</label>
+            <input type="number" id="longitude" value="31.2357" step="0.000001" placeholder="e.g. 31.2357">
+        </div>
+        
+        <div class="form-group">
+            <label for="maxDistance">Max Distance (km):</label>
+            <input type="number" id="maxDistance" value="50" min="1" max="1000">
+        </div>
+        
+        <button onclick="testLocationSearch()">🔍 Test Location Search</button>
+        <button onclick="getCurrentLocation()">📍 Get My Location</button>
+        
+        <div id="results" class="results" style="display: none;">
+            <h3>Results:</h3>
+            <div id="resultsList"></div>
+        </div>
+    </div>
+
+    <script>
+        function getCurrentLocation() {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(function(position) {
+                    document.getElementById('latitude').value = position.coords.latitude;
+                    document.getElementById('longitude').value = position.coords.longitude;
+                    alert('Location updated!');
+                }, function(error) {
+                    alert('Error getting location: ' + error.message);
+                });
+            } else {
+                alert('Geolocation is not supported by this browser.');
+            }
+        }
+
+        async function testLocationSearch() {
+            const query = document.getElementById('query').value;
+            const latitude = document.getElementById('latitude').value;
+            const longitude = document.getElementById('longitude').value;
+            const maxDistance = document.getElementById('maxDistance').value;
+            
+            if (!query || !latitude || !longitude) {
+                alert('Please fill all fields');
+                return;
+            }
+
+            const url = `http://localhost:5000/api/Product/search-nearby?query=${encodeURIComponent(query)}&latitude=${latitude}&longitude=${longitude}&maxDistance=${maxDistance}`;
+            
+            console.log('API URL:', url);
+            
+            try {
+                const response = await fetch(url);
+                const data = await response.json();
+                
+                console.log('API Response:', data);
+                displayResults(data);
+                
+            } catch (error) {
+                console.error('Error:', error);
+                document.getElementById('resultsList').innerHTML = `
+                    <div style="color: red;">
+                        <strong>Error:</strong> ${error.message}<br>
+                        Make sure the backend server is running on http://localhost:5000
+                    </div>
+                `;
+                document.getElementById('results').style.display = 'block';
+            }
+        }
+
+        function displayResults(data) {
+            const resultsDiv = document.getElementById('resultsList');
+            
+            if (!data || data.length === 0) {
+                resultsDiv.innerHTML = '<p>No results found</p>';
+            } else {
+                resultsDiv.innerHTML = data.map(product => `
+                    <div class="product">
+                        <h4>${product.name || product.Name}</h4>
+                        <p><strong>Pharmacy:</strong> ${product.pharmacyName || product.PharmacyName || 'N/A'}</p>
+                        <p><strong>Price:</strong> ${product.price || product.Price} EGP</p>
+                        <p><strong>Stock:</strong> ${product.stock || product.Stock}</p>
+                        <p class="distance"><strong>Distance:</strong> ${product.distance || product.Distance} km</p>
+                        <p><strong>Address:</strong> ${product.pharmacyAddress || product.PharmacyAddress || 'N/A'}</p>
+                    </div>
+                `).join('');
+            }
+            
+            document.getElementById('results').style.display = 'block';
+        }
+
+        // Test coordinates for Cairo locations
+        const testLocations = {
+            'Downtown Cairo': { lat: 30.0444, lng: 31.2357 },
+            'Zamalek': { lat: 30.0626, lng: 31.2497 },
+            'Maadi': { lat: 30.0131, lng: 31.2089 },
+            'Nasr City': { lat: 30.0876, lng: 31.3248 },
+            'Giza': { lat: 29.9668, lng: 31.2599 }
+        };
+
+        // Add test location buttons
+        document.addEventListener('DOMContentLoaded', function() {
+            const container = document.querySelector('.container');
+            const testButtonsDiv = document.createElement('div');
+            testButtonsDiv.innerHTML = '<h3>🏙️ Test Locations:</h3>';
+            
+            Object.entries(testLocations).forEach(([name, coords]) => {
+                const btn = document.createElement('button');
+                btn.textContent = name;
+                btn.style.width = 'auto';
+                btn.style.margin = '5px';
+                btn.style.display = 'inline-block';
+                btn.onclick = () => {
+                    document.getElementById('latitude').value = coords.lat;
+                    document.getElementById('longitude').value = coords.lng;
+                };
+                testButtonsDiv.appendChild(btn);
+            });
+            
+            container.insertBefore(testButtonsDiv, document.getElementById('results'));
+        });
+    </script>
+</body>
+</html> 

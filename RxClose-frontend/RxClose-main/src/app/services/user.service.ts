@@ -11,6 +11,8 @@ export interface User {
   email: string;
   phoneNumber: number;
   location: string;
+  latitude?: number;
+  longitude?: number;
   role: string;
 }
 
@@ -73,6 +75,28 @@ export class UserService {
     }).pipe(
       catchError(error => {
         console.error('Error deleting user:', error);
+        throw error;
+      })
+    );
+  }
+
+  getProfile(): Observable<User> {
+    return this.http.get<User>(`${this.baseUrl}/users/profile`, {
+      headers: this.getAuthHeaders()
+    }).pipe(
+      catchError(error => {
+        console.error('Error fetching profile:', error);
+        throw error;
+      })
+    );
+  }
+
+  updateProfile(profileData: any): Observable<any> {
+    return this.http.put<any>(`${this.baseUrl}/users/profile`, profileData, {
+      headers: this.getAuthHeaders()
+    }).pipe(
+      catchError(error => {
+        console.error('Error updating profile:', error);
         throw error;
       })
     );

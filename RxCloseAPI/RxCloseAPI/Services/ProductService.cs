@@ -8,10 +8,12 @@ namespace RxCloseAPI.Services;
 public class ProductService : IProductService
 {
     private readonly RxCloseDbContext _context;
+    private readonly ILocationService _locationService;
 
-    public ProductService(RxCloseDbContext context)
+    public ProductService(RxCloseDbContext context, ILocationService locationService)
     {
         _context = context;
+        _locationService = locationService;
     }
 
     public async Task<IEnumerable<Product>> GetAllAsync(string? category = null, string? status = null, CancellationToken cancellationToken = default)
@@ -185,5 +187,114 @@ public class ProductService : IProductService
                        (p.Manufacturer != null && p.Manufacturer.Contains(query)) ||
                        (p.ActiveIngredient != null && p.ActiveIngredient.Contains(query)))
             .ToListAsync(cancellationToken);
+    }
+
+    public async Task<IEnumerable<object>> SearchNearbyAsync(string query, double userLatitude, double userLongitude, double maxDistanceKm = 50, CancellationToken cancellationToken = default)
+    {
+        Console.WriteLine($"=== SearchNearbyAsync ===");
+        Console.WriteLine($"Query: {query}");
+        Console.WriteLine($"User Location: {userLatitude}, {userLongitude}");
+        Console.WriteLine($"Max Distance: {maxDistanceKm} km");
+
+        // First, search for products matching the query
+        var products = await _context.Products
+            .Include(p => p.Pharmacy)
+            .Where(p => p.Status == "active" && 
+                       (p.Name.Contains(query) || 
+                        p.Description.Contains(query) || 
+                        p.Category.Contains(query) ||
+                        (p.Manufacturer != null && p.Manufacturer.Contains(query)) ||
+                        (p.ActiveIngredient != null && p.ActiveIngredient.Contains(query))))
+            .ToListAsync(cancellationToken);
+
+        Console.WriteLine($"Found {products.Count} products matching query");
+
+        // Filter pharmacy products by location and calculate distances
+        var nearbyResults = new List<object>();
+
+        foreach (var product in products)
+        {
+            Console.WriteLine($"\nProcessing Product: {product.Name} (ID: {product.Id})");
+            Console.WriteLine($"Seller Type: {product.SellerType}");
+            
+            if (product.SellerType == "rxclose")
+            {
+                Console.WriteLine("RxClose product - adding with distance 0");
+                // RxClose products are always available
+                nearbyResults.Add(new
+                {
+                    product.Id,
+                    product.Name,
+                    product.Description,
+                    product.Price,
+                    product.Category,
+                    product.Stock,
+                    product.ImageUrl,
+                    product.Prescription,
+                    product.SellerType,
+                    product.SellerName,
+                    PharmacyName = "RxClose",
+                    Distance = 0,
+                    DistanceText = "Available globally"
+                });
+            }
+            else if (product.Pharmacy?.Latitude.HasValue == true && product.Pharmacy?.Longitude.HasValue == true)
+            {
+                Console.WriteLine($"Pharmacy: {product.Pharmacy.Name}");
+                Console.WriteLine($"Pharmacy Location: {product.Pharmacy.Latitude}, {product.Pharmacy.Longitude}");
+                
+                // Calculate distance for pharmacy products
+                var distance = _locationService.CalculateDistance(
+                    userLatitude, userLongitude,
+                    product.Pharmacy.Latitude.Value, product.Pharmacy.Longitude.Value);
+
+                Console.WriteLine($"Calculated Distance: {distance} km");
+
+                if (distance <= maxDistanceKm)
+                {
+                    Console.WriteLine($"Product within range - adding to results");
+                    nearbyResults.Add(new
+                    {
+                        product.Id,
+                        product.Name,
+                        product.Description,
+                        product.Price,
+                        product.Category,
+                        product.Stock,
+                        product.ImageUrl,
+                        product.Prescription,
+                        product.SellerType,
+                        product.SellerName,
+                        PharmacyName = product.Pharmacy.Name,
+                        PharmacyAddress = product.Pharmacy.Address,
+                        PharmacyPhone = product.Pharmacy.PhoneNumber,
+                        Distance = distance,
+                        DistanceText = _locationService.FormatDistance(distance)
+                    });
+                }
+                else
+                {
+                    Console.WriteLine($"Product too far - excluded from results");
+                }
+            }
+            else
+            {
+                Console.WriteLine("Pharmacy has no location data - excluded from results");
+            }
+        }
+
+        Console.WriteLine($"\nTotal nearby results: {nearbyResults.Count}");
+
+        // Sort by distance (RxClose products first, then by distance)
+        var sortedResults = nearbyResults.OrderBy(r => ((dynamic)r).Distance);
+        
+        Console.WriteLine("=== Final Results ===");
+        foreach (var result in sortedResults.Take(5)) // Log first 5 results
+        {
+            dynamic r = result;
+            Console.WriteLine($"Product: {r.Name}, Pharmacy: {r.PharmacyName}, Distance: {r.Distance} km");
+        }
+        
+        return sortedResults;
     }
 }

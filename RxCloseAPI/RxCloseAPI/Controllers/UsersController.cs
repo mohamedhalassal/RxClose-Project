@@ -13,6 +13,7 @@ using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using BCrypt.Net;
+using Microsoft.AspNetCore.Authorization;
 
 namespace RxCloseAPI.Controllers;
 
@@ -118,6 +119,8 @@ public class UsersController : ControllerBase
             user.UserName ?? "",
             user.Email ?? "",
             user.Location ?? "",
+            user.Latitude,
+            user.Longitude,
             user.Role ?? "user",
             user.CreatedAt == DateTime.MinValue ? DateTime.UtcNow : user.CreatedAt,
             user.LastLogin,
@@ -171,6 +174,8 @@ public class UsersController : ControllerBase
             newUser.UserName,
             newUser.Email,
             newUser.Location,
+            newUser.Latitude,
+            newUser.Longitude,
             newUser.Role,
             newUser.CreatedAt,
             newUser.LastLogin,
@@ -242,6 +247,8 @@ public class UsersController : ControllerBase
             user.UserName,
             user.Email,
             user.Location,
+            user.Latitude,
+            user.Longitude,
             user.Role,
             user.CreatedAt,
             user.LastLogin,
@@ -522,9 +529,239 @@ public class UsersController : ControllerBase
             });
         }
     }
+
+    [Authorize]
+    [HttpGet("profile")]
+    public async Task<IActionResult> GetProfile(CancellationToken cancellationToken)
+    {
+        try
+        {
+            // Debug: Print all headers
+            Console.WriteLine("=== Profile Request Headers ===");
+            foreach (var header in Request.Headers)
+            {
+                Console.WriteLine($"{header.Key}: {header.Value}");
+            }
+            
+            // Debug: Print all claims
+            Console.WriteLine("\n=== Profile Request Claims ===");
+            foreach (var claim in User.Claims)
+            {
+                Console.WriteLine($"{claim.Type}: {claim.Value}");
+            }
+            
+            // Try to get user ID from different claim types
+            var userIdClaim = User.Claims.FirstOrDefault(c => 
+                c.Type == ClaimTypes.NameIdentifier || 
+                c.Type == "sub" || 
+                c.Type == "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier");
+                
+            if (userIdClaim == null)
+            {
+                Console.WriteLine("\nNo user ID claim found in token");
+                return Unauthorized(new { message = "User ID not found in token." });
+            }
+
+            Console.WriteLine($"\nFound user ID claim: {userIdClaim.Type} = {userIdClaim.Value}");
+
+            if (!int.TryParse(userIdClaim.Value, out int userId))
+            {
+                Console.WriteLine($"Failed to parse user ID from claim value: {userIdClaim.Value}");
+                return Unauthorized(new { message = "Invalid user ID in token." });
+            }
+
+            Console.WriteLine($"\nGetting profile for user ID: {userId}");
+            
+            var user = await _userService.GetAsync(userId, cancellationToken);
+            if (user == null)
+            {
+                Console.WriteLine($"User not found with ID: {userId}");
+                return NotFound(new { message = "User not found." });
+            }
+
+            var userResponse = new UserResponse(
+                user.Id,
+                user.PhoneNumber,
+                user.Name,
+                user.UserName,
+                user.Email,
+                user.Location,
+                user.Latitude,
+                user.Longitude,
+                user.Role,
+                user.CreatedAt,
+                user.LastLogin,
+                user.Status,
+                user.Avatar
+            );
+
+            Console.WriteLine($"\nProfile retrieved successfully for user: {user.Email}");
+            return Ok(userResponse);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"\nError in GetProfile: {ex.Message}");
+            Console.WriteLine($"Stack trace: {ex.StackTrace}");
+            return StatusCode(500, new { message = "An error occurred while retrieving the profile." });
+        }
+    }
+
+    [Authorize]
+    [HttpPut("profile")]
+    public async Task<IActionResult> UpdateProfile([FromBody] UpdateUserDto request, CancellationToken cancellationToken)
+    {
+        try
+        {
+            Console.WriteLine("=== Update Profile Request ===");
+            Console.WriteLine($"Request body: {JsonSerializer.Serialize(request)}");
+            
+            // Get user ID from token
+            var userIdClaim = User.Claims.FirstOrDefault(c => 
+                c.Type == ClaimTypes.NameIdentifier || 
+                c.Type == "sub" || 
+                c.Type == "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier");
+                
+            if (userIdClaim == null)
+            {
+                Console.WriteLine("No user ID claim found in token");
+                return Unauthorized(new { message = "User ID not found in token." });
+            }
+
+            if (!int.TryParse(userIdClaim.Value, out int userId))
+            {
+                Console.WriteLine($"Failed to parse user ID from claim value: {userIdClaim.Value}");
+                return Unauthorized(new { message = "Invalid user ID in token." });
+            }
+
+            Console.WriteLine($"Updating profile for user ID: {userId}");
+            
+            // Get existing user
+            var existingUser = await _userService.GetAsync(userId, cancellationToken);
+            if (existingUser == null)
+            {
+                Console.WriteLine($"User not found with ID: {userId}");
+                return NotFound(new { message = "User not found." });
+            }
+
+            // Update user data from DTO
+            existingUser.Name = request.Name ?? existingUser.Name;
+            existingUser.Email = request.Email ?? existingUser.Email;
+            existingUser.PhoneNumber = request.PhoneNumber ?? existingUser.PhoneNumber;
+            existingUser.UserName = request.UserName ?? existingUser.UserName;
+            existingUser.Location = request.Location ?? existingUser.Location;
+            existingUser.Latitude = request.Latitude ?? existingUser.Latitude;
+            existingUser.Longitude = request.Longitude ?? existingUser.Longitude;
+
+            Console.WriteLine($"Updated user data: Name={existingUser.Name}, Email={existingUser.Email}, " +
+                            $"Phone={existingUser.PhoneNumber}, Location={existingUser.Location}, " +
+                            $"Latitude={existingUser.Latitude}, Longitude={existingUser.Longitude}");
+            
+            var result = await _userService.UpdateAsync(userId, existingUser, cancellationToken);
+            
+            if (!result)
+            {
+                Console.WriteLine("Failed to update user profile");
+                return StatusCode(500, new { message = "Failed to update profile." });
+            }
+
+            Console.WriteLine("Profile updated successfully");
+            
+            // Return updated user data
+            var userResponse = new UserResponse(
+                existingUser.Id,
+                existingUser.PhoneNumber,
+                existingUser.Name,
+                existingUser.UserName,
+                existingUser.Email,
+                existingUser.Location,
+                existingUser.Latitude,
+                existingUser.Longitude,
+                existingUser.Role,
+                existingUser.CreatedAt,
+                existingUser.LastLogin,
+                existingUser.Status,
+                existingUser.Avatar
+            );
+
+            return Ok(new { message = "Profile updated successfully.", user = userResponse });
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error in UpdateProfile: {ex.Message}");
+            Console.WriteLine($"Stack trace: {ex.StackTrace}");
+            return StatusCode(500, new { message = "An error occurred while updating the profile." });
+        }
+    }
+
+    [Authorize]
+    [HttpPost("change-password")]
+    public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordRequest request, CancellationToken cancellationToken)
+    {
+        try
+        {
+            // Debug: Print all headers
+            Console.WriteLine("=== Change Password Request Headers ===");
+            foreach (var header in Request.Headers)
+            {
+                Console.WriteLine($"{header.Key}: {header.Value}");
+            }
+            
+            // Debug: Print all claims
+            Console.WriteLine("\n=== Change Password Request Claims ===");
+            foreach (var claim in User.Claims)
+            {
+                Console.WriteLine($"{claim.Type}: {claim.Value}");
+            }
+            
+            // Try to get user ID from different claim types
+            var userIdClaim = User.Claims.FirstOrDefault(c => 
+                c.Type == ClaimTypes.NameIdentifier || 
+                c.Type == "sub" || 
+                c.Type == "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier");
+                
+            if (userIdClaim == null)
+            {
+                Console.WriteLine("\nNo user ID claim found in token");
+                return Unauthorized(new { message = "User ID not found in token." });
+            }
+
+            Console.WriteLine($"\nFound user ID claim: {userIdClaim.Type} = {userIdClaim.Value}");
+
+            if (!int.TryParse(userIdClaim.Value, out int userId))
+            {
+                Console.WriteLine($"Failed to parse user ID from claim value: {userIdClaim.Value}");
+                return Unauthorized(new { message = "Invalid user ID in token." });
+            }
+
+            Console.WriteLine($"\nAttempting to change password for user ID: {userId}");
+            
+            var result = await _userService.ChangePasswordAsync(userId, request.CurrentPassword, request.NewPassword, cancellationToken);
+            
+            if (!result)
+            {
+                Console.WriteLine("Password change failed - current password incorrect or user not found");
+                return BadRequest(new { message = "Current password is incorrect or user not found." });
+            }
+
+            Console.WriteLine("Password changed successfully");
+            return Ok(new { message = "Password changed successfully." });
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"\nError in ChangePassword: {ex.Message}");
+            Console.WriteLine($"Stack trace: {ex.StackTrace}");
+            return StatusCode(500, new { message = "An error occurred while changing the password." });
+        }
+    }
 }
 
 public class RoleUpdateRequest
 {
     public string Role { get; set; } = string.Empty;
+}
+
+public class ChangePasswordRequest
+{
+    public string CurrentPassword { get; set; } = string.Empty;
+    public string NewPassword { get; set; } = string.Empty;
 }

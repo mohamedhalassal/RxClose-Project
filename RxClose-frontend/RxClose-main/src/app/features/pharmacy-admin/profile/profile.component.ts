@@ -4,11 +4,12 @@ import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } 
 import { ActivatedRoute, Router } from '@angular/router';
 import { PharmacyService } from '../../../services/pharmacy.service';
 import { Pharmacy } from '../../../models/pharmacy.model';
+import { MapComponent } from '../../../shared/components/map/map.component';
 
 @Component({
   selector: 'app-pharmacy-profile',
   standalone: true,
-  imports: [CommonModule, FormsModule, ReactiveFormsModule],
+  imports: [CommonModule, FormsModule, ReactiveFormsModule, MapComponent],
   template: `
     <div class="profile-container">
       <!-- First Login Welcome Message -->
@@ -303,6 +304,47 @@ import { Pharmacy } from '../../../models/pharmacy.model';
                 </label>
                 <input type="text" formControlName="specializations" class="form-input"
                        placeholder="e.g., Diabetes Care, Pediatric Medicine, Dermatology">
+              </div>
+            </div>
+
+            <!-- Location Information Section -->
+            <div class="form-section">
+              <h4 class="section-title">
+                <i class="fas fa-map-marker-alt"></i>
+                Location Information
+              </h4>
+              
+              <div class="location-description">
+                <p>Click on the map below to set your pharmacy's exact location. This helps customers find you and enables location-based services.</p>
+              </div>
+
+              <app-map
+                title="Set Pharmacy Location"
+                subtitle="Click on the map to mark your pharmacy's exact location"
+                [initialLatitude]="profileForm.get('latitude')?.value"
+                [initialLongitude]="profileForm.get('longitude')?.value"
+                (locationSelected)="onLocationSelected($event)">
+              </app-map>
+
+              <div class="location-coordinates" *ngIf="profileForm.get('latitude')?.value && profileForm.get('longitude')?.value">
+                <div class="form-grid">
+                  <div class="form-group">
+                    <label class="form-label">
+                      <i class="fas fa-globe-americas"></i>
+                      Latitude
+                    </label>
+                    <input type="number" formControlName="latitude" class="form-input" readonly
+                           placeholder="Will be set automatically">
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">
+                      <i class="fas fa-globe-americas"></i>
+                      Longitude
+                    </label>
+                    <input type="number" formControlName="longitude" class="form-input" readonly
+                           placeholder="Will be set automatically">
+                  </div>
+                </div>
               </div>
             </div>
 
@@ -1063,6 +1105,8 @@ export class PharmacyProfileComponent implements OnInit {
       deliveryFee: [''],
       acceptsInsurance: [''],
       specializations: [''],
+      latitude: [''],
+      longitude: [''],
       isVerified: [false],
       emailNotifications: [true],
       smsNotifications: [false],
@@ -1333,5 +1377,13 @@ export class PharmacyProfileComponent implements OnInit {
 
   getCreationDate(): string {
     return '2022';
+  }
+
+  onLocationSelected(location: {latitude: number, longitude: number}) {
+    this.profileForm.patchValue({
+      latitude: location.latitude,
+      longitude: location.longitude
+    });
+    console.log('Location selected:', location);
   }
 } 

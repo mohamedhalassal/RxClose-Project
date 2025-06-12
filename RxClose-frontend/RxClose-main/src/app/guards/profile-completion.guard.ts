@@ -12,10 +12,10 @@ export const ProfileCompletionGuard = () => {
   
   console.log('ProfileCompletionGuard: Checking profile completion...');
   
-  const currentUser = authService.getCurrentUser();
+  const user = authService.getCurrentUserValue();
   
   // إذا لم يكن المستخدم مسجل دخول أو ليس admin، السماح بالوصول
-  if (!currentUser || currentUser.role?.toLowerCase() !== 'admin') {
+  if (!user || user.role?.toLowerCase() !== 'admin') {
     console.log('ProfileCompletionGuard: User is not pharmacy admin, allowing access');
     return true;
   }

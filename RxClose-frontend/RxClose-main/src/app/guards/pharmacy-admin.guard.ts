@@ -9,18 +9,18 @@ export const PharmacyAdminGuard = () => {
   console.log('PharmacyAdminGuard: Checking access...');
   
   const token = authService.getToken();
-  const currentUser = authService.getCurrentUser();
+  const user = authService.getCurrentUserValue();
   
   console.log('PharmacyAdminGuard: Token exists:', !!token);
-  console.log('PharmacyAdminGuard: Current user:', currentUser);
+  console.log('PharmacyAdminGuard: Current user:', user);
   
-  if (!token || !currentUser) {
+  if (!token || !user) {
     console.log('PharmacyAdminGuard: No token or user data, redirecting to login');
     router.navigate(['/auth/login']);
     return false;
   }
   
-  const userRole = currentUser.role?.toLowerCase();
+  const userRole = user.role?.toLowerCase();
   console.log('PharmacyAdminGuard: User role:', userRole);
   
   // التحقق من أن المستخدم له دور admin (pharmacy owner)
